@@ -2,7 +2,8 @@
 SQLyog Ultimate v12.09 (64 bit)
 MySQL - 5.7.19 : Database - myblog
 *********************************************************************
-*/
+*/
+
 
 /*!40101 SET NAMES utf8 */;
 
@@ -295,9 +296,6 @@ CREATE TABLE `tb_user` (
   UNIQUE KEY `email` (`email`)
 ) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC;
 
-/*Data for the table `tb_user` */
-
-insert  into `tb_user`(`web_site`,`user_id`,`username`,`password`,`nickname`,`avatar`,`intro`,`description`,`create_time`,`update_time`,`is_delete`,`is_silence`,`email`) values ('https://www.ran-feiran.cn',1,'zhaoran','$2a$10$Iz6.FlRzP5cLCPP9KhK2W.SC//mvBiApQ9Q.Ogk8SLmy1kyE9/W52','Ran-feiran','http://localhost:8080/download/43dcb4111c624a66b0e44b041bdc8413.jpg','带薪自学的java实习生','密码6个0','2020-10-23 13:52:14','2022-08-07 18:05:55',0,0,'2729627149@qq.com'),('https://www.baidu.com',2,'user','$2a$10$jalwt9mC7GWOkM5HjZroeOuD/1xhXcqvXgSYYX7ruCXBSeIX/ypW6','普通用户','http://localhost:8080/download/6bc2e775c8fe4e2ebb06f2be872e9db9.jpeg','普通用户的简介','密码6个0','2020-10-31 13:52:20','2022-08-04 09:37:09',0,0,'1233@qq.com'),(NULL,3,'testUser','$2a$10$jalwt9mC7GWOkM5HjZroeOuD/1xhXcqvXgSYYX7ruCXBSeIX/ypW6','默认昵称','https://gimg2.baidu.com/image_search/src=http%3A%2F%2Fup.enterdesk.com%2Fedpic_source%2F8a%2F54%2F9e%2F8a549e5130a10daad7765a21b9f35fd9.jpg&refer=http%3A%2F%2Fup.enterdesk.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=auto?sec=1653105894&t=33f55fba77e07b768f2f347dc4255de2',NULL,'密码6个0','2020-12-01 09:10:04','2022-07-11 11:10:24',0,0,'111@qq.com'),(NULL,4,'rann','$2a$10$jalwt9mC7GWOkM5HjZroeOuD/1xhXcqvXgSYYX7ruCXBSeIX/ypW6','rann','https://gimg2.baidu.com/image_search/src=http%3A%2F%2Fup.enterdesk.com%2Fedpic_source%2F8a%2F54%2F9e%2F8a549e5130a10daad7765a21b9f35fd9.jpg&refer=http%3A%2F%2Fup.enterdesk.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=auto?sec=1653105894&t=33f55fba77e07b768f2f347dc4255de2',NULL,NULL,NULL,'2022-07-23 20:38:07',0,0,NULL),(NULL,5,'1','$2a$10$DUpsMW3WCdeOr/rWwu5eB.CLoGW4Q4OV29Quhlh0EgRUbgbYXLub.','1','https://gimg2.baidu.com/image_search/src=http%3A%2F%2Fc-ssl.duitang.com%2Fuploads%2Fitem%2F202004%2F08%2F20200408223320_qmwoc.thumb.1000_0.jpeg&refer=http%3A%2F%2Fc-ssl.duitang.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=auto?sec=1661761648&t=72a4fd16ca5ff9138a1539bd5722ed8c',NULL,NULL,'2022-07-23 20:39:28',NULL,0,0,NULL),(NULL,13,'wangdi','$2a$10$DNl3.OVI3/goFQRhYqMuVe3A.tHJ.vm6lzFjnEws.mkTMCYdeM8V2','BLOG_UID:084624644','https://gravatar.loli.net/avatar/d41d8cd98f00b204e9800998ecf8427e?d=mp&v=1.4.14',NULL,NULL,'2022-08-08 10:54:10','2022-08-08 10:54:10',0,0,'122@qq.com');
 
 /*Table structure for table `tb_user_login` */
 
