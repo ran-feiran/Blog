@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zhao.mapper.CommentMapper">
+
+    <select id="getUserReplyList" resultType="com.zhao.dto.CommentBackDTO">
+        select
+        a.id,
+        a.user_id,
+        b.avatar,
+        b.nickname,
+        a.reply_id,
+        a.article_id,
+        a.create_time,
+        a.comment_content
+        from   myblog.tb_comment a ,myblog.tb_user b
+        where a.is_delete = 0 and a.user_id = b.user_id
+        <if test='nickname != null and nickname != "" '>
+            and b.nickname like concat('%',#{nickname},'%')
+        </if>
+        LIMIT #{pageNum},#{pageSize}
+    </select>
+
+    <select id="listComments" resultType="com.zhao.dto.CommentDTO">
+        select
+            a.id,
+            a.user_id,
+            b.nickname,
+            b.avatar,
+            b.web_site,
+            a.comment_content,
+            a.create_time
+        from myblog.tb_comment a
+        inner join myblog.tb_user b on b.user_id=a.user_id
+        WHERE
+        <if test="articleId != null">
+            a.article_id = #{articleId}
+        </if>
+        <if test="articleId == null">
+            a.article_id is NULL
+        </if>
+        and  a.is_delete=0
+        and  parent_id IS NULL
+        ORDER BY a.create_time desc
+        limit #{current},10
+    </select>
+
+    <select id="listReplies" resultType="com.zhao.dto.ReplyDTO">
+            SELECT
+                c.user_id,
+                u.nickname,
+                u.avatar,
+                u.web_site,
+                c.reply_id,
+                r.nickname AS reply_nickname,
+                r.web_site AS reply_website,
+                c.id,
+                c.parent_id,
+                c.comment_content,
+                c.create_time
+                FROM myblog.tb_comment c
+                JOIN myblog.tb_user u ON c.user_id = u.user_id
+                JOIN myblog.tb_user r ON c.reply_id = r.user_id
+                WHERE
+                c.is_delete = 0
+                AND
+                parent_id IN
+                (<foreach collection="commentIdList" item="commentId" separator=",">
+                #{commentId}
+                </foreach>)
+                order by create_time asc
+    </select>
+
+    <select id="listReplyCountByCommentId" resultType="com.zhao.dto.ReplyCountDTO">
+        SELECT
+        parent_id AS comment_id,
+        count(1) AS reply_count
+        FROM myblog.tb_comment
+        WHERE is_delete = 0
+        AND parent_id IN
+        (<foreach collection="commentIdList" item="commentId" separator=",">
+            #{commentId}
+        </foreach>)
+        GROUP BY parent_id
+    </select>
+
+    <select id="listRepliesByCommentId" resultType="com.zhao.dto.ReplyDTO">
+        SELECT
+        c.user_id,
+        u.nickname,
+        u.avatar,
+        u.web_site,
+        c.reply_id,
+        r.nickname AS reply_nickname,
+        r.web_site AS reply_website,
+        c.id,
+        c.parent_id,
+        c.comment_content,
+        c.create_time
+        FROM myblog.tb_comment c
+        JOIN myblog.tb_user u ON c.user_id = u.user_id
+        JOIN myblog.tb_user r ON c.reply_id = r.user_id
+        WHERE
+        c.is_delete = 0
+        AND
+        parent_id = #{commentId}
+        order by create_time asc
+        limit #{current},5
+    </select>
+
+
+</mapper>

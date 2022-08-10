@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zhao.mapper.CategoryMapper">
+
+    <select id="listCategories" resultType="com.zhao.dto.CateGoryDTO">
+        select
+            c.category_id,
+            c.category_name
+        from myblog.tb_category c
+    </select>
+
+    <select id="queryArticleCountByCategoryId" resultType="int">
+        select
+            count(1) article_count
+        from myblog.tb_category c,myblog.tb_article a
+        where c.category_id = a.category_id
+          and c.category_id = #{id}
+    </select>
+
+    <select id="listArticles" resultType="com.zhao.dto.ArticleBlogDTO">
+        select
+            a.article_id,
+            a.article_title,
+            a.article_content,
+            a.article_cover,
+            a.is_top,
+            a.create_time,
+            c.category_id,
+            c.category_name
+        from myblog.tb_article a,myblog.tb_category c
+        where a.category_id = c.category_id
+        <if test="categoryId != null and categoryId != ''">
+            and a.category_id = #{categoryId}
+        </if>
+        order by a.is_top desc
+        limit #{current},1;
+    </select>
+</mapper>

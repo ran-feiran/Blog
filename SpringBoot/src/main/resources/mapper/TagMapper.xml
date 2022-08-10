@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zhao.mapper.TagMapper">
+
+    <select id="getTagListByArticleId" resultType="com.zhao.pojo.Tag">
+        select
+            t.tag_id,
+            t.tag_name
+        from myblog.tb_article_tag at,myblog.tb_tag t
+        where at.article_id = #{id}
+          and at.tag_id = t.tag_id
+    </select>
+
+    <select id="listArticles" resultType="com.zhao.dto.ArticleBlogDTO">
+        select
+        a.article_id,
+        a.article_title,
+        a.article_content,
+        a.article_cover,
+        a.is_top,
+        a.create_time,
+        c.category_id,
+        c.category_name
+        from myblog.tb_article a,myblog.tb_category c,myblog.tb_article_tag at
+        where a.category_id = c.category_id
+        and at.article_id = a.article_id
+        and at.tag_id = #{tagId}
+        order by a.is_top desc
+        limit #{current},1;
+    </select>
+</mapper>

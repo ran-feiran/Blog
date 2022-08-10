@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zhao.mapper.UserMapper">
+    <select id="getUserRolesByUserId" parameterType="int" resultType="java.lang.String">
+        select t.role_name from myblog.tb_role t where t.role_id in (
+            select r.role_id
+            from myblog.tb_role_user r
+            where r.user_id = #{id}
+        )
+    </select>
+
+
+    <select id="getUserList" resultType="com.zhao.dto.UserDTO" parameterType="com.zhao.vo.UserQueryVO">
+        select
+            u.user_id,
+            u.nickname,
+            u.avatar,
+            u.create_time,
+            u.update_time,
+            u.is_delete,
+            u.is_silence,
+            u.web_site,
+            r.role_name
+        from myblog.tb_user u,myblog.tb_role r,myblog.tb_role_user ru
+        where u.user_id = ru.user_id and  r.role_id = ru.role_id and u.is_delete = 0
+        <if test="userQueryVO.roleName != null and userQueryVO.roleName != ''">
+            and r.role_name = #{userQueryVO.roleName}
+        </if>
+        <if test="userQueryVO.nickname != null and userQueryVO.nickname != ''">
+            and u.nickname like concat('%',#{userQueryVO.nickname},'%')
+        </if>
+        limit #{userQueryVO.startIndex},#{userQueryVO.pageSize}
+    </select>
+
+    <select id="getUserRoleList" resultType="com.zhao.dto.UserSignalDTO">
+        select
+            u.user_id,
+            u.nickname,
+            u.avatar,
+            u.username,
+            u.intro,
+            r.role_name
+        from myblog.tb_user u, myblog.tb_role r, myblog.tb_role_user ru
+        where u.user_id = ru.user_id and r.role_id = ru.role_id
+        <if test="nickname != null and nickname != ''">
+            and u.nickname like concat('%',#{nickname},'%')
+        </if>
+        limit #{current},#{size}
+    </select>
+
+
+    <update id="updateUserById" parameterType="com.zhao.dto.UserDTO">
+        update myblog.tb_user u set u.avatar = #{userDTO.avatar},
+                                    u.nickname = #{userDTO.nickname},
+                                    u.update_time = #{userDTO.updateTime}
+        where u.user_id = #{userDTO.userId}
+    </update>
+
+    <insert id="addUser" parameterType="com.zhao.dto.UserDTO">
+        insert into myblog.tb_user(username, password, nickname, avatar, create_time)
+        values
+               (#{userDTO.username},#{userDTO.password},#{userDTO.nickname},#{userDTO.avatar},#{userDTO.createTime})
+    </insert>
+
+    <update id="updateSilenceById">
+        update myblog.tb_user u set u.is_silence = #{isSilence}
+        where u.user_id = #{userId}
+    </update>
+</mapper>

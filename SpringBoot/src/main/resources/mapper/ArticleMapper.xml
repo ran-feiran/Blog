@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zhao.mapper.ArticleMapper">
+
+    <resultMap id="ArticleByMap" type="com.zhao.vo.ArticleAddVO">
+        <result property="articleId" column="article_id"/>
+        <result property="articleTitle" column="article_title"/>
+        <result property="articleContent" column="article_content"/>
+        <result property="articleCover" column="article_cover"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="isDraft" column="is_draft"/>
+        <result property="isTop" column="is_top"/>
+        <collection property="tagIdList" ofType="int">
+            <result column="tag_id"/>
+        </collection>
+    </resultMap>
+
+    <resultMap id="ArticleDTOByMap" type="com.zhao.dto.ArticleDTO">
+        <result property="articleId" column="article_id"/>
+        <result property="articleTitle" column="article_title"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="categoryName" column="category_name"/>
+        <result property="isTop" column="is_top"/>
+<!--        <collection property="tagName" ofType="string" >-->
+<!--            <result column="tag_name"/>-->
+<!--        </collection>-->
+    </resultMap>
+
+
+    <select id="getArticleById"  parameterType="int" resultMap="ArticleByMap">
+        select
+            a.article_id,
+            a.article_title,
+            a.article_content,
+            a.article_cover,
+            a.category_id,
+            t.tag_id,
+            a.is_draft,
+            a.is_top
+        from myblog.tb_article a,myblog.tb_tag t,myblog.tb_article_tag at
+        where a.article_id = at.article_id
+          and t.tag_id =at.tag_id
+          and a.article_id = #{articleId}
+    </select>
+
+    <select id="getListArticle" resultMap="ArticleDTOByMap">
+        select
+            a.article_id,
+            a.article_title,
+            a.create_time,
+            a.update_time,
+            a.is_top,
+            c.category_name
+        from myblog.tb_article a,myblog.tb_category c
+        where  a.category_id = c.category_id
+          <if test="articleTitle != null and articleTitle != ''">
+              and a.article_title like concat('%',#{articleTitle},'%')
+          </if>
+        order by a.article_id asc
+        limit #{pageNum},#{pageSize};
+    </select>
+
+
+    <select id="getTagNameByArticleId" resultType="java.lang.String">
+        select
+            t.tag_name
+        from myblog.tb_article a,myblog.tb_article_tag at,myblog.tb_tag t
+        where a.article_id = at.article_id
+          and at.tag_id = t.tag_id
+          and a.article_id = #{id}
+    </select>
+
+
+    <select id="listArticles" resultType="com.zhao.dto.ArticleBlogDTO">
+        select
+            a.article_id,
+            a.article_title,
+            a.article_content,
+            a.article_cover,
+            a.is_top,
+            a.create_time,
+            c.category_id,
+            c.category_name
+        from myblog.tb_article a,myblog.tb_category c
+        where a.category_id = c.category_id
+        order by a.is_top desc
+        limit #{current},1;
+    </select>
+
+    <select id="getArticleByIdBlog" resultType="com.zhao.dto.ArticleBlogDTO">
+        select
+            a.article_id,
+            a.article_title,
+            a.article_content,
+            a.article_cover,
+            a.create_time,
+            a.update_time,
+            c.category_id,
+            c.category_name
+        from myblog.tb_article a,myblog.tb_category c
+        where a.category_id = c.category_id
+        and a.article_id = #{articleId}
+    </select>
+
+
+</mapper>

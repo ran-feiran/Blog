@@ -1,0 +1,44 @@
+spring:
+  mail:
+    host: smtp.qq.com
+    username: 2729627149@qq.com
+    password: aiqtmclxskiedebi
+    default-encoding: utf-8
+    properties:
+      mail.smtp.ssl.enable: true # qq需要配置ssl
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      maxRequestSize: 100MB
+  application:
+    name: blog-web
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    url: jdbc:mysql://43.138.10.156:3310/myblog?useUnicode=true&characterEncoding=UTF-8&useSSL=false
+    username: root
+    password: zr..12ZR
+    hikari:
+      connection-init-sql: set names utf8mb4
+  redis:
+    database: 0
+    host: 43.138.10.156
+    port: 6380
+    password: zr..12ZR
+mybatis-plus:
+  mapper-locations: classpath*:mapper/*.xml
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true
+  type-aliases-package: com.zhao.pojo
+  global-config:
+    db-config:
+      logic-not-delete-value: 0
+      logic-delete-value: 1
+server:
+  port: 8080
+upload:
+  local:
+    # nginx映射本地文件路径，无域名则为 ip:83
+     url: https://static.ran-feiran.cn/
+    # 本地文件存储路径
+     path: /usr/local/upload/

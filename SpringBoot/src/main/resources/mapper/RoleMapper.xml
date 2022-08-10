@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zhao.mapper.RoleMapper">
+    <select id="queryRole" resultType="com.zhao.dto.RoleListDto">
+        select
+            r.role_name,
+            count(r.role_name) size
+        from myblog.tb_role r
+        group by r.role_name
+    </select>
+</mapper>
