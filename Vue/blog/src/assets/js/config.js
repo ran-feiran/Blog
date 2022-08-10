@@ -1,0 +1,3 @@
+export default {
+  TENCENT_CAPTCHA_BLOG:"2088053498"
+}
