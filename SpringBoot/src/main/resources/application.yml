@@ -1,8 +1,8 @@
 spring:
   mail:
     host: smtp.qq.com
-    username: 2729627149@qq.com
-    password: aiqtmclxskiedebi
+    username: 123@qq.com
+    password: 授权码
     default-encoding: utf-8
     properties:
       mail.smtp.ssl.enable: true # qq需要配置ssl
@@ -14,16 +14,16 @@ spring:
     name: blog-web
   datasource:
     driver-class-name: com.mysql.jdbc.Driver
-    url: jdbc:mysql://43.138.10.156:3310/myblog?useUnicode=true&characterEncoding=UTF-8&useSSL=false
+    url: jdbc:mysql://localhost:3306/myblog?useUnicode=true&characterEncoding=UTF-8&useSSL=false
     username: root
-    password: zr..12ZR
+    password: root
     hikari:
       connection-init-sql: set names utf8mb4
   redis:
     database: 0
-    host: 43.138.10.156
-    port: 6380
-    password: zr..12ZR
+    host: 127.0.0.1
+    port: 6379
+    password: 密码
 mybatis-plus:
   mapper-locations: classpath*:mapper/*.xml
   configuration:
@@ -39,6 +39,6 @@ server:
 upload:
   local:
     # nginx映射本地文件路径，无域名则为 ip:83
-     url: https://static.ran-feiran.cn/
+     url: http://ip:端口号
     # 本地文件存储路径
      path: /usr/local/upload/
