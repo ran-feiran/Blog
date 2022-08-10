@@ -38,7 +38,7 @@ server:
   port: 8080
 upload:
   local:
-    # nginx映射本地文件路径，无域名则为 ip:83
+    # nginx映射本地文件路径
      url: http://ip:端口号
     # 本地文件存储路径
      path: /usr/local/upload/
