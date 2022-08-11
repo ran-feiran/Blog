@@ -71,6 +71,9 @@ public class MyFilterInvocationSecurityMetadatasource implements FilterInvocatio
         if (objects.size() <= 0) {
             return null;
         }
+        if (url.startsWith("/role/saveRolePermissionList/") && method.equals("POST")) {
+            this.clearDataSource();
+        }
         return SecurityConfig.createList(objects.toArray(new String[]{}));
 //        return SecurityConfig.createList("ADMIN","TEST","USER","GUEST");
     }
