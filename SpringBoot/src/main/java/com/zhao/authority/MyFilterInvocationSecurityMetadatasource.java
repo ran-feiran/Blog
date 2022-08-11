@@ -67,7 +67,6 @@ public class MyFilterInvocationSecurityMetadatasource implements FilterInvocatio
 //                System.out.println(Arrays.toString(objects.toArray(new String[]{})) +"11111");
             }
         }
-//        System.out.println(Arrays.toString(objects.toArray(new String[]{})) + "2222");
         if (objects.size() <= 0) {
             return null;
         }
