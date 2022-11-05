@@ -44,9 +44,9 @@
 
 ## 目录结构
 
-前端项目位于blog-vue下，blog为前台，admin为后台。
+前端项目位于Vue下，blog为前台，admin为后台。
 
-后端项目位于blog-springboot下。
+后端项目位于Springboot下。
 
 SQL文件位于根目录下的mysql8.sql，需要MYSQL8以上版本。
 
@@ -113,9 +113,9 @@ blog-springboot
 
 **服务器：** 腾讯云2核2G  华为云2核4G  CentOS7.5
 
-**CDN：** 暂无
+**CDN ：** 暂无
 
-**对象存储：**本地存储
+**对象存储**：本地存储
 
 **最低配置：** 1核2G服务器（关闭ElasticSearch）
 
