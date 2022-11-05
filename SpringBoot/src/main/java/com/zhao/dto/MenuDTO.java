@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Data
@@ -13,21 +14,27 @@ import java.util.List;
 @NoArgsConstructor
 public class MenuDTO {
 
-    private Integer menuId;
+    private Integer id;
 
-    private String menuName;
+    private String name;
 
-    private String menuUrl;
+    private String path;
 
-    private String menuComponent;
+    private String component;
 
-    private String menuIcon;
+    private String icon;
 
-    private Integer menuSort;
+    private Date createTime;
+
+    private Date updateTime;
+
+    private Integer orderNum;
 
     private Integer parentId;
 
-    private String description;
+    private Integer isHidden;
+
+    private Integer isDelete;
 
     private List<MenuDTO> children = new ArrayList<>();
 }

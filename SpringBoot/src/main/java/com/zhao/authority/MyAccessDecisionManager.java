@@ -1,6 +1,7 @@
 package com.zhao.authority;
 
-import com.zhao.exception.div.MyAccessDeniedException;
+import com.zhao.exception.MyAccessDeniedException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDecisionManager;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.ConfigAttribute;
@@ -14,57 +15,62 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import static com.zhao.constant.CommonConst.ANONYMOUS_USER;
+import static com.zhao.constant.CommonConst.UNKNOWN;
+import static com.zhao.enums.RoleEnum.GUEST;
+import static com.zhao.enums.StatusCodeEnum.AUTHORIZED;
+import static com.zhao.enums.StatusCodeEnum.NO_LOGIN;
+
 
 /**
- * 对设置的权限进行管理
  * 访问决策管理器
+ *
+ * @author ran-feiran
+ * @date 2022/09/27
  */
 @Component
+@Slf4j
 public class MyAccessDecisionManager implements AccessDecisionManager {
 
-    private final boolean supports = true;
-
     @Override
-    public void decide(Authentication authentication,
-                       Object object,
-                       Collection<ConfigAttribute> configAttributes) throws AccessDeniedException, InsufficientAuthenticationException {
-        // 如果没有需要的权限信息直接放行
-        if (configAttributes == null) {
-            return;
+    public void decide(Authentication authentication, Object object, Collection<ConfigAttribute> configAttributes)
+            throws AccessDeniedException, InsufficientAuthenticationException {
+        // 当前接口拥有的所有角色
+        List<String> roleList = configAttributes.stream()
+                .map(ConfigAttribute::getAttribute).collect(Collectors.toList());
+        if (roleList.contains(UNKNOWN)) {
+            throw new MyAccessDeniedException(NO_LOGIN.getDesc());
         }
-
-        // 匿名用户
-        if (Objects.equals(authentication.getName(), "anonymousUser")) {
-            List<String> collect = configAttributes.
-                    stream().
-                    map(ConfigAttribute::getAttribute).
-                    collect(Collectors.toList());
-            if (collect.contains("GUEST")) {
-                return;
-            }
-        }
-
-        // 获取登录用户的权限信息
-        List<String> authorities = authentication.getAuthorities().
-                stream().
-                map(GrantedAuthority::getAuthority).
-                collect(Collectors.toList());
-        for (ConfigAttribute configAttribute : configAttributes) {
-            // 与我们后台通过路径和方法得到的权限进行比对
-            if (authorities.contains(configAttribute.getAttribute())) {
-                return;
-            }
-        }
-        throw new MyAccessDeniedException("权限不足");
+        log.info("====================SpringSecurity执行中====================");
+        accessDecisionHandler(authentication, roleList);
     }
 
     @Override
     public boolean supports(ConfigAttribute attribute) {
-        return supports;
+        return true;
     }
 
     @Override
     public boolean supports(Class<?> clazz) {
-        return supports;
+        return true;
+    }
+
+    private void accessDecisionHandler(Authentication authentication, List<String> roleList) {
+        // 判断是否匿名用户
+        if (Objects.equals(authentication.getName(), ANONYMOUS_USER)) {
+            if (roleList.contains(GUEST.getLabel())) {
+                return;
+            }
+        } else {
+            // 获取登录用户的权限信息
+            List<String> authorities = authentication.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority).collect(Collectors.toList());
+            for (String item : roleList) {
+                if (authorities.contains(item)) {
+                    return;
+                }
+            }
+        }
+        throw new MyAccessDeniedException(AUTHORIZED.getDesc());
     }
 }

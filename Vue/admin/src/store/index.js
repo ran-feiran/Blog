@@ -1,59 +1,73 @@
-import Vue from 'vue'
-import Vuex from 'vuex'
+import Vue from "vue";
+import Vuex from "vuex";
 import createPersistedState from "vuex-persistedstate";
-Vue.use(Vuex)
+
+Vue.use(Vuex);
 
 export default new Vuex.Store({
   state: {
-    collapse: false, //折叠按钮状态
-    userRoles:[],//用户角色集合
-    userInfo:{},//用户信息列表
-    menuList:[],// 菜单列表
-    tabList: [{ name: "首页", path: "/home" }],
+    collapse: true,
+    tabList: [{ name: "首页", path: "/" }],
+    userId: null,
+    roleList: [],
+    avatar: null,
+    nickname: null,
+    intro: null,
+    webSite: null,
+    userMenuList: [],
+    loginPage: "",
   },
   mutations: {
-    //登录保存用户信息
-    login(state, user) {
-      state.userInfo={} // 防止没有注销再次登录
-      state.userInfo=user;
+    loadLoginPage(state, loginPage) {
+      state.loginPage = loginPage;
     },
-    //保存用户的角色信息
-    userRoles(state,userRole){
-      state.userRoles = []
-      state.userRoles=userRole;
-    } ,
-    menuList(state,menuList){
-      state.menuList = []
-      state.menuList=menuList
+    login(state, user) {
+      state.userId = user.userId;
+      state.avatar = user.avatar;
+      state.nickname = user.nickname;
+      state.intro = user.intro;
+      state.webSite = user.webSite;
     },
     logout(state) {
-      state.userInfo={}
-      state.userRoles = []
-      state.menuList = []
+      state.userId = null;
+      state.roleList = [];
+      state.avatar = null;
+      state.nickname = null;
+      state.intro = null;
+      state.webSite = null;
+      state.userMenuList = [];
     },
-
+    saveRoleList(state, roles) {
+      state.roleList = roles;
+    },
     saveTab(state, tab) {
-      if (state.tabList.findIndex(item => item.path === tab.path) === -1) {
+      if (state.tabList.findIndex(item => item.path === tab.path) == -1) {
         state.tabList.push({ name: tab.name, path: tab.path });
       }
     },
-
-    // 移除标签页
     removeTab(state, tab) {
-      let index = state.tabList.findIndex(item => item.path === tab.path);
+      var index = state.tabList.findIndex(item => item.name === tab.name);
       state.tabList.splice(index, 1);
     },
-
-    // 重置标签页
     resetTab(state) {
-      state.tabList = [{ name: "首页", path: "/home" }];
+      state.tabList = [{ name: "首页", path: "/" }];
     },
-    // 折叠菜单
     trigger(state) {
       state.collapse = !state.collapse;
+    },
+    saveUserMenuList(state, userMenuList) {
+      state.userMenuList = userMenuList;
+    },
+
+    updateAvatar(state, avatar) {
+      state.avatar = avatar;
+    },
+    updateUserInfo(state, user) {
+      state.nickname = user.nickname;
+      state.intro = user.intro;
+      state.webSite = user.webSite;
     }
   },
-  getters: {},
   actions: {},
   modules: {},
   plugins: [
@@ -61,4 +75,4 @@ export default new Vuex.Store({
       storage: window.sessionStorage
     })
   ]
-})
+});

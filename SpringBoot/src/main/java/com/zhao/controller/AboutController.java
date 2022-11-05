@@ -1,52 +1,47 @@
 package com.zhao.controller;
 
 
-import com.mysql.jdbc.StringUtils;
-import com.zhao.result.Result;
-import com.zhao.result.ResultInfo;
+import com.zhao.annotations.OptLog;
 import com.zhao.api.AboutService;
-import com.zhao.exception.div.ServiceException;
-import com.zhao.pojo.About;
+import com.zhao.result.ResultStandby;
+import com.zhao.vo.BlogInfoVO;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.HashMap;
-import java.util.Map;
+import static com.zhao.constant.OptTypeConst.UPDATE;
+import static com.zhao.enums.StatusCodeEnum.SUCCESS;
+import static com.zhao.result.ResultStandby.success;
 
+
+/**
+ * 关于控制器
+ *
+ * @author ran-feiran
+ * @date 2022/09/27
+ */
 @RestController
+@Api(tags = "关于我模块")
 public class AboutController {
 
     @Autowired
-    AboutService aboutService;
+    private AboutService aboutService;
 
-    @GetMapping("/getAbout")
-    public Result getAbout() {
-        About about = null;
-        try {
-            about = aboutService.getById(1);
-        } catch (Exception e) {
-            throw  new ServiceException(ResultInfo.CODE_600, "失败");
-        }
-        Map<String, Object> map = new HashMap<>();
-        if (!StringUtils.isNullOrEmpty(about.getContent())) {
-            map.put("content", about.getContent());
-        }
-        return Result.success(map, "亲爱的朋友,你好啊!");
+    @ApiOperation(value = "得到关于我")
+    @GetMapping("/about/getAbout")
+    public ResultStandby<String> getAbout() {
+        return success(aboutService.getAbout(), SUCCESS.getDesc());
     }
 
-    @PostMapping("/updateAbout")
-    @Transactional
-    public Result updateAbout(@RequestBody About about) {
-        System.out.println(about.getContent());
-        try {
-            aboutService.saveOrUpdate(about);
-        } catch (Exception e) {
-            throw  new ServiceException(ResultInfo.CODE_600, "更新失败");
-        }
-        return Result.success();
+    @ApiOperation(value = "更新关于我")
+    @OptLog(optType = UPDATE)
+    @PutMapping("/about/updateAbout")
+    public ResultStandby<?> updateAbout(@RequestBody BlogInfoVO blogInfoVO) {
+        aboutService.updateAbout(blogInfoVO);
+        return success(null, SUCCESS.getDesc());
     }
 }

@@ -1,7 +1,6 @@
 package com.zhao.dto;
 
 
-import com.zhao.pojo.Tag;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -31,18 +30,45 @@ public class ArticleBlogDTO implements Serializable {
 
     private String categoryName;
 
-    private List<Tag> tagList;
+    private List<TagDTO> tagList;
 
-    private boolean isTop;
+    private Integer isTop;
 
     private Date createTime;
 
     private Date updateTime;
 
-    // 访问量
+    private String nickname;
+
+    /**
+     * 访问量
+     */
     private Integer viewsCount;
 
-    // 点赞数
+    /**
+     * 点赞
+     */
     private Integer likeCount;
+
+    /**
+     * 上一篇文章
+     */
+    private ArticlePaginationDTO lastArticle;
+
+    /**
+     * 下一篇文章
+     */
+    private ArticlePaginationDTO nextArticle;
+
+    /**
+     * 推荐文章列表
+     */
+    private List<ArticleRecommendDTO> recommendArticleList;
+
+    /**
+     * 最新文章列表
+     */
+    private List<ArticleRecommendDTO> newestArticleList;
+
 
 }

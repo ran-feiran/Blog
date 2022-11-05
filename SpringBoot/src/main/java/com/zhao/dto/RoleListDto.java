@@ -1,6 +1,7 @@
 package com.zhao.dto;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.io.Serializable;
@@ -8,8 +9,12 @@ import java.io.Serializable;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class RoleListDto implements Serializable {
+@Builder
+public class RoleListDTO implements Serializable {
+
     private static final long serialVersionUID = 1L;
-    private String roleName;
-    private Integer size;
+
+    private String roleLabel;
+
+    private Integer id;
 }

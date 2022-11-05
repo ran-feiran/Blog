@@ -22,4 +22,9 @@ public class PageDTO<T> {
     private long count;
 
 
+    public PageDTO(List<T> recordList) {
+        this.recordList = recordList;
+    }
+
+
 }

@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- 标签或分类名 -->
-    <div :class="categoryOrTag + ' banner'">
+    <div class="banner" :style="cover">
       <h1 class="banner-title animated fadeInDown">{{ title }} - {{ name }}</h1>
     </div>
     <div class="article-list-wrapper">
@@ -29,21 +29,25 @@
               </div>
               <div style="margin-top:0.375rem">
                 <!-- 是否置顶 -->
-                <span v-if="item.top == 1">
+                <span v-if="item.isTop == 1">
                 <span style="color:#ff7242">
                   <i class="iconfont iconzhiding" /> 置顶
                 </span>
                 <span class="separator">|</span>
               </span>
                 <!-- 发表时间 -->
-                <v-icon size="20">mdi-clock-outline</v-icon>
+                <svg class="icon" aria-hidden="true" style="font-size: 18px">
+                  <use xlink:href="#icon-rili"></use>
+                </svg>
                 {{ item.createTime | date }}
                 <!-- 文章分类 -->
                 <router-link
                   :to="'/category/' + item.categoryId"
                   class="float-right"
                 >
-                  <v-icon>mdi-bookmark</v-icon>{{ item.categoryName }}
+                  <svg class="icon" aria-hidden="true" style="font-size: 18px">
+                    <use xlink:href="#icon-biaoqian1"></use>
+                  </svg> {{ item.categoryName }}
                 </router-link>
               </div>
             </div>
@@ -77,11 +81,12 @@ export default {
     const path = this.$route.path;
     if (path.indexOf("/category") != -1) {
       this.title = "分类";
-      this.categoryOrTag = "category-banner";
     } else {
       this.title = "标签";
-      this.categoryOrTag = "tag-banner";
     }
+  },
+  destroyed() {
+    document.title = "一个简单的技术分享页"
   },
   data() {
     return {
@@ -95,19 +100,22 @@ export default {
   methods: {
     infiniteHandler($state) {
       const path = this.$route.path;
+      let arr = path.split("/");
       // /category/* /tag/*
       this.axios
-        .get("/api" + path, {
+        .get("/api/" + arr[1] + "/query/" + arr[2], {
           params: {
             current: this.current
           }
         })
         .then((res) => {
           const cons = res.data;
-          this.name = cons.data.name
-          if (cons.data.articleList.length > 0) {
-            this.articleList.push(...cons.data.articleList);
-            console.log(this.articleList)
+          if (cons.data.name) {
+            this.name = cons.data.name;
+            document.title = this.title + " - " + this.name;
+          }
+          if (cons.data.recordList.length > 0) {
+            this.articleList.push(...cons.data.recordList);
             this.current++;
             $state.loaded();
           } else {
@@ -115,19 +123,22 @@ export default {
           }
         });
     }
+  },
+  computed:{
+    cover() {
+      var cover = "";
+      this.$store.state.blogInfo.pageList.forEach(item => {
+        if (item.pageLabel == "articleList") {
+          cover = item.pageCover;
+        }
+      });
+      return "background: url(" + cover + ") center center / cover no-repeat";
+    }
   }
 };
 </script>
 
 <style scoped>
-.tag-banner {
-  background: url("../assets/img/2.jpg")
-    center center / cover no-repeat;
-}
-.category-banner {
-  background: url("../assets/img/2.jpg")
-    center center / cover no-repeat;
-}
 @media (min-width: 760px) {
   .article-list-wrapper {
     max-width: 1106px;

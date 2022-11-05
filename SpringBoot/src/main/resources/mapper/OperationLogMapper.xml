@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zhao.mapper.OperationLogMapper">
+
+    <select id="listLogs" resultType="com.zhao.dto.OperationLogDTO">
+        select
+            o.id,
+            o.opt_module,
+            o.opt_desc,
+            o.opt_url,
+            o.opt_method,
+            o.response_data,
+            o.request_param,
+            o.opt_type,
+            o.request_method,
+            o.ip_address,
+            o.ip_source,
+            o.create_time,
+            u.nickname
+        from myblog.tb_operation_log o
+        left join myblog.tb_user u on u.user_id = o.user_id
+        <where>
+            <if test="condition.keywords != null and condition.keywords != ''">
+                o.opt_module like concat('%',#{condition.keywords},'%')
+            </if>
+            <if test="condition.keywords != null and condition.keywords != ''">
+                or o.opt_desc like concat('%',#{condition.keywords},'%')
+            </if>
+        </where>
+        order by o.id desc
+        limit #{condition.current},#{condition.size}
+    </select>
+
+</mapper>

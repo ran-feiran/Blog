@@ -4,68 +4,88 @@
 <mapper namespace="com.zhao.mapper.ApiMapper">
 
     <resultMap id="ApiTree" type="com.zhao.dto.ApiBackDTO">
-        <result property="id" column="id"/>
-        <result property="apiId" column="api_id"/>
-        <result property="name" column="name"/>
+        <id property="id" column="id"/>
+        <result property="parentId" column="parent_id"/>
+        <result property="resourceName" column="resource_name"/>
         <result property="url" column="url"/>
-        <result property="method" column="method"/>
-        <result property="pid" column="pid"/>
-        <result property="description" column="description"/>
-        <result property="sort" column="sort"/>
+        <result property="requestMethod" column="request_method"/>
+        <result property="createTime" column="create_time"/>
+        <result property="isAnonymous" column="is_anonymous"/>
         <collection property="children" ofType="com.zhao.dto.ApiBackDTO">
-            <result property="id" column="bid"/>
-            <result property="apiId" column="bapi_id"/>
-            <result property="name" column="bname"/>
-            <result property="url" column="burl"/>
-            <result property="method" column="bmethod"/>
-            <result property="pid" column="bpid"/>
-            <result property="description" column="bdesc"/>
-            <result property="sort" column="bsort"/>
+            <id property="id" column="cid"/>
+            <result property="parentId" column="cparent_id"/>
+            <result property="resourceName" column="cresource_name"/>
+            <result property="url" column="curl"/>
+            <result property="requestMethod" column="crequest_method"/>
+            <result property="createTime" column="ccreate_time"/>
+            <result property="isAnonymous" column="cis_anonymous"/>
         </collection>
     </resultMap>
 
-    <select id="listApiInfoBack" resultMap="ApiTree" >
+
+    <resultMap id="ApiPermissionList" type="com.zhao.dto.ApiPermissionDTO">
+        <id property="id" column="id"/>
+        <result property="url" column="url"/>
+        <result property="requestMethod" column="request_method"/>
+        <result property="isAnonymous" column="is_anonymous"/>
+        <collection property="roleList" ofType="java.lang.String">
+            <result column="role_name"/>
+        </collection>
+    </resultMap>
+
+    <select id="getAllApiPermission" resultMap="ApiPermissionList">
         select
-            a.id,
-            a.api_id,
-            a.name,
-            a.url,
-            a.method,
-            a.pid,
-            a.description,
-            a.sort,
-            b.id bid,
-            b.api_id bapi_id,
-            b.name bname,
-            b.url burl,
-            b.method bmethod,
-            b.pid bpid,
-            b.description bdesc,
-            b.sort bsort
-        from  myblog.tb_api a, myblog.tb_api b
-        where a.api_id = b.pid
-        <if test="apiId != null">
-            and (a.api_id = #{apiId} or b.pid = #{apiId})
-        </if>
-        order by a.sort asc
+            r.id,
+            r.url,
+            r.request_method,
+            r.is_anonymous,
+            tr.role_name
+        from
+        (
+            select r.id,
+                   r.url,
+                   r.request_method,
+                   r.is_anonymous
+            from myblog.tb_resource r
+            where r.parent_id is not null
+        ) r
+        left join myblog.tb_role_resource rr on r.id = rr.resource_id
+        left join myblog.tb_role tr on tr.role_id = rr.role_id
     </select>
 
-    <select id="getAllApiPermission" resultType="com.zhao.dto.ApiPermissionDTO">
+    <select id="getResourcesInfoBack" resultMap="ApiTree">
         select
-            a.id,
-            a.url,
-            a.method request_method
-        from myblog.tb_api a
-        where a.url is not null
-        order by a.sort;
+            r.id,
+            r.url,
+            r.resource_name,
+            r.request_method,
+            r.is_anonymous,
+            r.create_time,
+            r.parent_id,
+            rr.id cid,
+            rr.url curl,
+            rr.resource_name cresource_name,
+            rr.request_method crequest_method,
+            rr.is_anonymous cis_anonymous,
+            rr.create_time ccreate_time,
+            rr.parent_id cparent_id
+        from myblog.tb_resource r
+        left join myblog.tb_resource rr on rr.parent_id = r.id
+        <where>
+            r.parent_id is null and (
+            <if test="condition.keywords != null">
+                 r.resource_name like concat('%',#{condition.keywords},'%')
+            </if>
+            <if test="condition.keywords != null">
+                or rr.resource_name like concat('%',#{condition.keywords},'%')
+            </if>
+            )
+        </where>
     </select>
 
-    <select id="getRoleListByApiId" resultType="java.lang.String">
-        select
-            r.role_name
-        from myblog.tb_role_api ra,myblog.tb_role r
-        where ra.api_id = #{apiId}
-          and ra.role_id = r.role_id
-    </select>
-
+    <update id="updateAnonymousById">
+        update myblog.tb_resource r
+        set r.is_anonymous = #{anonymous.isAnonymous}
+        where r.id = #{anonymous.id}
+    </update>
 </mapper>

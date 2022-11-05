@@ -1,10 +1,15 @@
 <template>
   <v-footer app padless absolute v-if="!this.isMessage">
     <div class="footer-wrap">
-      <div style="font-weight: bolder">Copyright &copy; {{ new Date().getFullYear() - 1}}-{{ new Date().getFullYear() }} By ran-feiran</div>
+      <div style="font-weight: bolder">Copyright &copy;
+        {{ blogInfo.websiteConfig.websiteCreateTime | year }}
+        -
+        {{ new Date().getFullYear() }} By
+        {{ blogInfo.websiteConfig.websiteAuthor }}
+      </div>
       <a href="https://beian.miit.gov.cn" target="_blank" style="font-weight: bolder">
-        蒙ICP备2022001314号</a
-      >
+        {{ blogInfo.websiteConfig.websiteRecordNo }}
+      </a>
     </div>
   </v-footer>
 </template>
@@ -14,6 +19,9 @@ export default {
   computed: {
     isMessage() {
       return this.$route.path === "/message";
+    },
+    blogInfo() {
+      return this.$store.state.blogInfo;
     }
   }
 }

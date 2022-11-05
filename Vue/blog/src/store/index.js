@@ -10,20 +10,18 @@ export default new Vuex.Store({
     loginFlag: false,
     registerFlag: false,
     forgetFlag: false,
+    emailFlag: false,
     drawer: false,  // 手机端
-
-    //1
     loginUrl: "",
-    //1
-
     userId: null,
     avatar: null,
     nickname: null,
     intro: null,
     webSite: null,
+    loginType: null,
+    email: null,
     articleLikeSet: [],
     commentLikeSet: [],
-
     blogInfo: {}  // 博客信息存储
   },
   mutations: {
@@ -36,6 +34,8 @@ export default new Vuex.Store({
       state.email = user.email;
       state.articleLikeSet = user.articleLikeSet ? user.articleLikeSet : [];
       state.commentLikeSet = user.commentLikeSet ? user.commentLikeSet : [];
+      state.email = user.email;
+      state.loginType = user.loginType;
     },
 
     logoutBlog(state) {
@@ -44,13 +44,19 @@ export default new Vuex.Store({
       state.nickname = null;
       state.intro = null;
       state.webSite = null;
+      state.email = null;
       state.articleLikeSet = [];  // 文章点赞集合
       state.commentLikeSet = [];  // 评论点赞集合
+      state.email = null;
+      state.loginType = null;
     },
     updateUserInfo(state, user) {
       state.nickname = user.nickname;
       state.intro = user.intro;
       state.webSite = user.webSite;
+    },
+    saveEmail(state, email) {
+      state.email = email;
     },
     updateAvatar(state, avatar) {
       state.avatar = avatar;
@@ -63,6 +69,7 @@ export default new Vuex.Store({
       state.loginFlag = false;
       state.searchFlag = false;
       state.forgetFlag = false;
+      state.emailFlag = false;
     },
     commentLike(state, commentId) {
       let commentLikeSet = state.commentLikeSet;
@@ -81,7 +88,7 @@ export default new Vuex.Store({
       }
     },
     saveLoginUrl(state, url) {
-      state.loginUrl = url;
+      state.loginUrl = url;  // 三方授权登录路径保存
     },
 
   },

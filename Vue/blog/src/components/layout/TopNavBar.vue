@@ -4,13 +4,17 @@
     <div class="d-md-none nav-mobile-container">
       <div style="font-size:18px;font-weight:bold">
         <router-link to="/">
-          <span style="font-weight: revert ">BLOG</span>
+          {{ blogInfo.websiteConfig.websiteAuthor }}
         </router-link>
       </div>
       <div style="margin-left:auto">
-        <a @click="openSearch"><i class="iconfont iconsousuo"/></a>
+        <a @click="openSearch"><svg class="icon" aria-hidden="true" style="margin-bottom: 2px">
+          <use xlink:href="#icon-sousuo"></use>
+        </svg></a>
         <a @click="openDrawer" style="margin-left:10px;font-size:20px">
-          <i class="iconfont iconhanbao" />
+          <svg class="icon" aria-hidden="true" >
+            <use xlink:href="#icon-mulu"></use>
+          </svg>
         </a>
       </div>
     </div>
@@ -18,51 +22,71 @@
     <div class="d-md-block d-none nav-container">
       <div class="float-left blog-title">
         <router-link to="/">
-          <span style="font-weight: revert">BLOG</span>
+          {{ blogInfo.websiteConfig.websiteAuthor }}
         </router-link>
       </div>
       <div class="float-right nav-title">
         <div class="menus-btn">
-          <a @click="openSearch"><i class="iconfont iconsousuo" /> <span style="color: white;font-weight: bolder">搜索</span></a>
+          <a @click="openSearch">
+            <svg class="icon" aria-hidden="true" style="margin-right: 4px">
+            <use xlink:href="#icon-sousuo"></use>
+            </svg>
+            <span style="color: white;font-weight: bolder">搜索</span></a>
         </div>
         <div class="menus-item">
           <router-link to="/">
-            <i class="iconfont iconzhuye" /> <span style="color: white;font-weight: bolder">首页</span>
+            <svg class="icon" aria-hidden="true">
+              <use xlink:href="#icon-home"></use>
+            </svg> <span style="color: white;font-weight: bolder">首页</span>
           </router-link>
         </div>
         <div class="menus-item">
           <router-link to="/archives">
-            <i class="iconfont iconguidang" /> <span style="color: white;font-weight: bolder">归档</span>
+            <svg class="icon" aria-hidden="true">
+              <use xlink:href="#icon-guidang"></use>
+            </svg> <span style="color: white;font-weight: bolder">归档</span>
           </router-link>
         </div>
         <div class="menus-item">
           <router-link to="/categories">
-            <i class="iconfont iconfenlei" /> <span style="color: white;font-weight: bolder">分类</span>
+            <svg class="icon" aria-hidden="true">
+              <use xlink:href="#icon-fenlei"></use>
+            </svg> <span style="color: white;font-weight: bolder">分类</span>
           </router-link>
         </div>
         <div class="menus-item">
           <router-link to="/tags">
-            <i class="iconfont iconbiaoqian" /> <span style="color: white;font-weight: bolder">标签</span>
+            <svg class="icon" aria-hidden="true">
+              <use xlink:href="#icon-biaoqian"></use>
+            </svg> <span style="color: white;font-weight: bolder">标签</span>
           </router-link>
         </div>
         <div class="menus-item">
           <router-link to="/links">
-            <i class="iconfont iconlianjie" /> <span style="color: white;font-weight: bolder">友链</span>
+            <svg class="icon" aria-hidden="true">
+              <use xlink:href="#icon-lianjie"></use>
+            </svg> <span style="color: white;font-weight: bolder">友链</span>
           </router-link>
         </div>
         <div class="menus-item">
           <router-link to="/about">
-            <i class="iconfont iconzhifeiji" /> <span style="color: white;font-weight: bolder">关于</span>
+            <svg class="icon" aria-hidden="true">
+              <use xlink:href="#icon-zhifeiji"></use>
+            </svg>  <span style="color: white;font-weight: bolder">关于</span>
           </router-link>
         </div>
         <div class="menus-item">
           <router-link to="/message">
-            <i class="iconfont iconpinglunzu" /> <span style="color: white;font-weight: bolder">留言</span>
+            <svg class="icon" aria-hidden="true">
+              <use xlink:href="#icon-icon_pinglun"></use>
+            </svg>  <span style="color: white;font-weight: bolder">留言</span>
           </router-link>
         </div>
         <div class="user-btn">
           <a v-if="!this.$store.state.avatar" @click="openLogin">
-            <i class="iconfont icondenglu" /> <span style="color: white;font-weight: bolder">登录</span>
+            <svg class="icon" aria-hidden="true">
+              <use xlink:href="#icon-shouye_gerenzhongxinliang"></use>
+            </svg>  <span style="color: white;font-weight: bolder">登录</span>
           </a>
 
           <template v-else>
@@ -75,11 +99,15 @@
             <ul class="user-submenu">
               <li>
                 <router-link to="/user">
-                  <i class="iconfont icongerenzhongxin" /> 个人中心
+                  <svg class="icon" aria-hidden="true">
+                    <use xlink:href="#icon-shouye_gerenzhongxinliang"></use>
+                  </svg> 个人中心
                 </router-link>
               </li>
               <li>
-                <a @click="logout"><i class="iconfont icontuichu" /> 退出</a>
+                <a @click="logout"><svg class="icon" aria-hidden="true" >
+                  <use xlink:href="#icon-tuichu"></use>
+                </svg> 退出</a>
               </li>
             </ul>
           </template>
@@ -143,6 +171,9 @@ export default {
   computed: {
     avatar() {
       return this.$store.state.avatar;
+    },
+    blogInfo() {
+      return this.$store.state.blogInfo;
     }
   }
 };

@@ -5,13 +5,6 @@
         mdi-close
       </v-icon>
       <div class="login-wrapper">
-        <v-text-field
-                v-model="username"
-                label="用户名"
-                placeholder="请输入您的用户名"
-                clearable
-                @keyup.enter="register"
-        />
         <!-- 用户名 -->
         <v-text-field
           v-model="email"
@@ -48,13 +41,13 @@
         <v-btn
           block
           color="red"
-          style="color:#fff"
+          style="color:#fff;margin-top: 17px"
           @click="register"
         >
           注册
         </v-btn>
         <!-- 登录 -->
-        <div style="margin-top: 10px">
+        <div style="margin-top: 15px">
           已有账号？<span @click="openLogin" style="color: #4ab1f4">登录</span>
         </div>
       </div>
@@ -70,7 +63,7 @@ export default {
       email:"",
       code: "",
       password: "",
-      flag: false,
+      flag: true,
       codeMsg: "发送",
       time: 60,
       show: false
@@ -81,19 +74,22 @@ export default {
       this.$store.state.registerFlag = false;
       this.$store.state.loginFlag = true;
     },
-
     register() {
       let reg = /^[A-Za-z0-9\u4e00-\u9fa5]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/;
-      if(this.username.length == 0){
-        this.$toast({ type: "error", message: "用户名不能为空" });
-        return false;
-      }
+      // if(this.username.length == 0){
+      //   this.$toast({ type: "error", message: "用户名不能为空" });
+      //   return false;
+      // }
       if (!reg.test(this.email)) {
         this.$toast({ type: "error", message: "邮箱格式不正确" });
         return false;
       }
       if (this.password.trim().length < 5) {
-        this.$toast({ type: "error", message: "密码不能少于5位" });
+        this.$toast({ type: "error", message: "密码不能少于6位" });
+        return false;
+      }
+      if (this.password.trim().length > 15) {
+        this.$toast({ type: "error", message: "密码不能多于15位" });
         return false;
       }
       if (this.code.trim().length != 6) {
@@ -101,7 +97,7 @@ export default {
         return false;
       }
       const user = {
-        username: this.username,
+        username: this.email,
         email:this.email,
         password: this.password,
         code: this.code
@@ -120,7 +116,6 @@ export default {
         }
       });
     },
-
     sendCode() {
       const that = this;
       let reg = /^[A-Za-z0-9\u4e00-\u9fa5]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/;
@@ -132,25 +127,24 @@ export default {
       // eslint-disable-next-line no-undef
       let captcha = new TencentCaptcha(this.config.TENCENT_CAPTCHA_BLOG, function(res) {
             if (res.ret === 0) {
-          that.axios
-            .get("/api/user/sendEmailCode", {
-              params: { email: that.email }
-            })
-            .then((res) => {
-              const cons = res.data
-              if (cons.flag) {
-                that.countDown();
-                that.$toast({ type: "success", message: cons.message });
-              } else {
-                that.$toast({ type: "error", message: cons.message });
-              }
-            });
+                that.axios
+                  .get("/api/user/sendEmailCode", {
+                    params: { email: that.email }
+                  })
+                  .then((res) => {
+                    const cons = res.data
+                    if (cons.flag) {
+                      that.countDown();
+                      that.$toast({ type: "success", message: cons.message });
+                    } else {
+                      that.$toast({ type: "error", message: cons.message });
+                    }
+                  });
             }
       });
       // 显示验证码
       captcha.show();
     },
-
     countDown() {
       this.flag = true;
       this.timer = setInterval(() => {
@@ -164,8 +158,6 @@ export default {
         }
       }, 1000);
     },
-
-
   },
   computed: {
     registerFlag: {
@@ -184,10 +176,17 @@ export default {
       return true;
     }
   },
-  watch: {
-    username() {
-
+  watch:{
+    email(value) {
+      let reg = /^[A-Za-z0-9\u4e00-\u9fa5]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/;
+      if (reg.test(value)) {
+        this.flag = false;
+      } else {
+        this.flag = true;
+      }
     }
   }
-};
+}
 </script>
+
+

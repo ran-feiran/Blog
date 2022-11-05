@@ -1,47 +1,58 @@
 package com.zhao.controller;
 
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.zhao.result.Result;
-import com.zhao.result.ResultInfo;
+import com.zhao.annotations.OptLog;
 import com.zhao.api.FriendLinkService;
-import com.zhao.exception.div.ServiceException;
-import com.zhao.pojo.FriendLink;
+import com.zhao.dto.FriendLinkBackDTO;
+import com.zhao.dto.PageDTO;
+import com.zhao.result.ResultStandby;
+import com.zhao.vo.ConditionVO;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+import static com.zhao.constant.OptTypeConst.*;
+import static com.zhao.enums.StatusCodeEnum.SUCCESS;
+import static com.zhao.result.ResultStandby.success;
+
+
+/**
+ * 友链控制器
+ *
+ * @author ran-feiran
+ * @date 2022/10/14
+ */
 @RestController
 @RequestMapping("/friendLink")
+@Api(tags = "友链模块")
 public class FriendLinkController {
 
     @Autowired
-    FriendLinkService friendLinkService;
+    private FriendLinkService friendLinkService;
 
 
+    @ApiOperation(value = "获取友链列表")
     @GetMapping("/listLinks")
-    public Result listLinks(@RequestParam(value = "current", required = false, defaultValue = "1") Integer current,
-                            @RequestParam(value = "size", required = false, defaultValue = "9999") Integer size,
-                            @RequestParam(value = "nickname", required = false) String nickname) {
-        IPage<FriendLink> page = friendLinkService.getFriendLinkList(current, size, nickname);
-        long count = page.getTotal();
-        List<FriendLink> data = page.getRecords();
-        Map<String, Object> map = new HashMap<>();
-        map.put("linkList", data);
-        map.put("count", count);
-        return Result.success(map, "获取友链成功");
+    public ResultStandby<PageDTO<FriendLinkBackDTO>> listLinks(ConditionVO conditionVO) {
+        return success(friendLinkService.getFriendLinkList(conditionVO), SUCCESS.getDesc());
     }
 
+    @ApiOperation(value = "新增或更新友链")
+    @OptLog(optType = SAVE_OR_UPDATE)
     @PostMapping("/addOrEditFriendLink")
-    public Result addOrEditFriendLink(@RequestBody FriendLink friendLink) {
-        try {
-            friendLinkService.saveOrUpdate(friendLink);
-        } catch (Exception e) {
-            throw new ServiceException(ResultInfo.CODE_600, "友链异常,重新提交");
-        }
-        return Result.success();
+    public ResultStandby<?> addOrEditFriendLink(@RequestBody FriendLinkBackDTO friendLink) {
+        friendLinkService.addOrEditFriendLink(friendLink);
+        return success();
+    }
+
+    @ApiOperation(value = "删除友链")
+    @OptLog(optType = REMOVE)
+    @DeleteMapping("/del/batch")
+    public ResultStandby<?> delBatchFriendLink(@RequestBody List<Integer> ids) {
+        friendLinkService.removeBatchByIds(ids);
+        return success();
     }
 }

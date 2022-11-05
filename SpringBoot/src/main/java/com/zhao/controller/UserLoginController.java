@@ -1,44 +1,45 @@
 package com.zhao.controller;
 
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.zhao.result.Result;
+import com.zhao.annotations.OptLog;
 import com.zhao.api.UserLoginService;
-import com.zhao.pojo.UserLogin;
+import com.zhao.dto.PageDTO;
+import com.zhao.dto.UserLoginDTO;
+import com.zhao.result.ResultStandby;
+import com.zhao.vo.ConditionVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import static com.zhao.constant.OptTypeConst.REMOVE;
+import static com.zhao.enums.StatusCodeEnum.SUCCESS;
+import static com.zhao.result.ResultStandby.success;
 
+/**
+ * 用户登录控制器
+ *
+ * @author ran-feiran
+ * @date 2022/09/27
+ */
 @RestController
 @Api(tags = "用户登录信息模块")
-@RequestMapping("/userLogin")
 public class UserLoginController {
 
     @Autowired
     private UserLoginService userLoginService;
 
-    @ApiOperation(value = "分页获取用户登录信息列表")
-    @GetMapping("/getUserInfoList")
-    public Result getUserInfoList(@RequestParam("pageNum") Integer pageNum,
-                                  @RequestParam("pageSize") Integer pageSize,
-                                  @RequestParam("nickname") String nickname) {
-        IPage<UserLogin> page = userLoginService.getUserInfoList(pageNum, pageSize, nickname);
-        long total = page.getTotal();
-        List<UserLogin> data = page.getRecords();
-        Map<String, Object> map = new HashMap<>();
-        map.put("userLoginInfoList",data);
-        map.put("total",total);
-        return Result.success(map,"获取登录数据成功");
+    @ApiOperation(value = "获取在线用户列表")
+    @GetMapping("/userLogin/getOnlineUser")
+    public ResultStandby<PageDTO<UserLoginDTO>> getUserInfoList(ConditionVO conditionVO) {
+        return success(userLoginService.getUserInfoList(conditionVO), SUCCESS.getDesc());
     }
 
-    @DeleteMapping("/deleteUser")
-    public Result deleteUser(@RequestParam("id") Integer userLoginId) {
+    @ApiOperation(value = "下线用户")
+    @OptLog(optType = REMOVE)
+    @DeleteMapping("/userLogin/del/online/{userLoginId}")
+    public ResultStandby<?> deleteUser(@PathVariable("userLoginId") Integer userLoginId) {
         userLoginService.removeById(userLoginId);
-        return Result.success();
+        return success(null, SUCCESS.getDesc());
     }
 }

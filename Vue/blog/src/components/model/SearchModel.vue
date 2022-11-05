@@ -3,24 +3,27 @@
   <v-dialog v-model="searchFlag" max-width="600" :fullscreen="isMobile">
     <v-card class="search-wrapper" style="border-radius:4px">
       <div class="mb-3">
-        <span class="search-title">本地搜索</span>
+        <span class="search-title">搜索</span>
         <!-- 关闭按钮 -->
-        <v-icon class="float-right" @click="searchFlag = false">
+        <v-icon class="float-right" @click="closeSearchFlag">
           mdi-close
         </v-icon>
       </div>
       <!-- 输入框 -->
       <div class="search-input-wrapper">
-        <v-icon>mdi-magnify</v-icon>
+        <svg class="icon" aria-hidden="true" style="margin-right: 4px">
+          <use xlink:href="#icon-sousuo"></use>
+        </svg>
         <input v-model="keywords" placeholder="输入文章标题或内容..." />
       </div>
+
       <!-- 搜索结果 -->
       <div class="search-result-wrapper">
         <hr class="divider" />
         <ul>
-          <li class="search-reslut" v-for="item of articleList" :key="item.id">
+          <li class="search-reslut" v-for="item of articleList" :key="item.articleId">
             <!-- 文章标题 -->
-            <a @click="goTo(item.id)" v-html="item.articleTitle" />
+            <a @click="goTo(item.articleId)" v-html="item.articleTitle" />
             <!-- 文章内容 -->
             <p
               class="search-reslut-content text-justify"
@@ -33,7 +36,8 @@
           v-show="flag && articleList.length == 0"
           style="font-size:0.875rem"
         >
-          找不到您查询的内容：{{ keywords }}
+          <span style="font-weight: bolder">找不到您查询的内容：</span>
+          <span style="color: #e80f16;font-weight: bold">{{ keywords }}</span>
         </div>
       </div>
     </v-card>
@@ -51,9 +55,20 @@ export default {
   },
   methods: {
     goTo(articleId) {
+      this.keywords = "";
       this.$store.state.searchFlag = false;
       this.$router.push({ path: "/articles/" + articleId });
+    },
+    closeSearchFlag() {
+      this.keywords = "";
+      this.$store.state.searchFlag = false;
     }
+  },
+  created() {
+    console.log(
+        "%c博客网站作者----ran-feiran，博客地址：https://www.ran-feiran.cn 咨询请加V:zr152527",
+        "background-color:rgb(30,30,30);border-radius:4px;font-size:12px;padding:4px;color:rgb(220,208,129);"
+    );
   },
   computed: {
     searchFlag: {
@@ -73,7 +88,26 @@ export default {
     }
   },
   watch: {
-
+    keywords(value) {
+      // let md = require("markdown-it")();
+      this.flag = value.trim() != "" ? true : false;
+      this.axios
+          .get("/api/article/search", {
+            params: { current: 1, keywords: value }
+          })
+          .then((res) => {
+            const cons = res.data;
+            // 去掉markdown标签
+            // cons.data.articleList.forEach(item => {
+            //   item.articleContent = md
+            //       .render(item.articleContent)
+            //       .replace(/<\/?[^>]*>/g, "")
+            //       .replace(/[|]*\n/, "")
+            //       .replace(/&npsp;/gi, "");
+            // });
+            this.articleList = cons.data;
+          });
+    }
   }
 };
 </script>

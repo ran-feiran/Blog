@@ -1,152 +1,116 @@
 package com.zhao.controller;
 
 
-import cn.hutool.core.bean.BeanUtil;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.zhao.dto.ArchivesDTO;
-import com.zhao.dto.ArticleBlogDTO;
-import com.zhao.pojo.Article;
-import com.zhao.result.Result;
-import com.zhao.result.ResultInfo;
+import com.zhao.annotations.OptLog;
 import com.zhao.api.ArticleService;
-import com.zhao.dto.ArticleDTO;
-import com.zhao.exception.div.ServiceException;
-import com.zhao.mapper.ArticleTagMapper;
-import com.zhao.pojo.ArticleTag;
-import com.zhao.vo.ArticleAddVO;
+import com.zhao.dto.*;
+import com.zhao.result.ResultStandby;
+import com.zhao.vo.ArticleTopVO;
+import com.zhao.vo.ArticleVO;
+import com.zhao.vo.ConditionVO;
+import com.zhao.vo.DeleteVO;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
+import javax.validation.Valid;
+import java.io.IOException;
+import java.util.List;
 
+
+import static com.zhao.constant.OptTypeConst.*;
+import static com.zhao.enums.StatusCodeEnum.SUCCESS;
+import static com.zhao.result.ResultStandby.success;
+
+/**
+ * 文章控制器
+ *
+ * @author ran-feiran
+ * @date 2022/09/27
+ */
 @RestController
 @RequestMapping("/article")
+@Api(tags = "文章模块")
 public class ArticleController {
-
-    @Autowired
-    private ArticleTagMapper articleTagMapper;
 
     @Autowired
     private ArticleService articleService;
 
+    @ApiOperation(value = "文章搜索")
+    @GetMapping("/search")
+    public ResultStandby<List<ArticleSearchDTO>> getArticlesBySearch(ConditionVO conditionVO) throws IOException {
+        return success(articleService.getArticlesBySearch(conditionVO), SUCCESS.getDesc());
+    }
+
+    @ApiOperation(value = "文章点赞")
+    @OptLog(optType = SAVE)
     @PostMapping("/like/{articleId}")
-    public Result saveLikeArticle(@PathVariable("articleId") Integer articleId) {
+    public ResultStandby<?> saveLikeArticle(@PathVariable("articleId") Integer articleId) {
         articleService.saveLikeArticle(articleId);
-        return Result.success();
+        return success();
     }
 
+    @ApiOperation(value = "通过文章id获取文章")
     @GetMapping("/blog/{articleId}")
-    public Result getArticleByIdBlog(@PathVariable("articleId") Integer articleId) {
-        ArticleBlogDTO articleByIdBlog = articleService.getArticleByIdBlog(articleId);
-        Map<String, Object> map = new HashMap<>();
-        map.put("data",articleByIdBlog);
-        return Result.success(map,"");
+    public ResultStandby<ArticleBlogDTO> getArticleByIdBlog(@PathVariable("articleId") Integer articleId) throws Exception {
+        return success(articleService.getArticleByIdBlog(articleId),SUCCESS.getDesc());
     }
 
+    @ApiOperation(value = "文章归档")
     @GetMapping("/archives")
-    public Result getArchives(@RequestParam("current") Integer current) {
-        Page<Article> archives = articleService.getArchives(current);
-        List<Article> records = archives.getRecords();
-        List<ArchivesDTO> archivesDTOS = new ArrayList<>();
-        for (Article record : records) {
-            ArchivesDTO archivesDTO = new ArchivesDTO();
-            BeanUtil.copyProperties(record, archivesDTO, false);
-            archivesDTOS.add(archivesDTO);
-        }
-        System.out.println(Arrays.toString(archivesDTOS.toArray()));
-        long total = archives.getTotal();
-        Map<String, Object> map = new HashMap<>();
-        map.put("archiveList", archivesDTOS);
-        map.put("count", total);
-        return Result.success(map,"");
+    public ResultStandby<PageDTO<ArchivesDTO>> getArchives(@RequestParam("current") Integer current) {
+        return success(articleService.getArchives((current - 1) * 10),SUCCESS.getDesc());
     }
 
+    @ApiOperation(value = "获取文章列表")
     @GetMapping("/articles")
-    public Result listArticles(@RequestParam("current") Integer current) {
-        current = current - 1;
-        List<ArticleBlogDTO> articleBlogDTOS = articleService.listArticles(current);
-        Map<String, Object> map = new HashMap<>();
-        map.put("articleList",articleBlogDTOS);
-        return Result.success(map,"");
+    public ResultStandby<List<ArticleBlogDTO>> listArticles(@RequestParam("current") Integer current) {
+        return success(articleService.listArticles(current - 1),SUCCESS.getDesc());
     }
 
+    @ApiOperation(value = "新增或更新文章")
+    @OptLog(optType = SAVE_OR_UPDATE)
     @PostMapping("/saveOrUpdateArticle")
-    public Result saveOrUpdateArticle(@RequestBody ArticleAddVO articleAddVO) {
-        //articleAddVO.setDraft(true);
-        int id = articleService.saveOrUpdateAndSetTagIdList(articleAddVO);
-        Map<String, Object> map = new HashMap<>();
-        map.put("articleId",id);
-        return Result.success(map,"成功");
+    public ResultStandby<?> saveOrUpdateArticle(@Valid @RequestBody ArticleVO articleVO) {
+        articleService.saveOrUpdateArticle(articleVO);
+        return success(null,SUCCESS.getDesc());
     }
 
+    @ApiOperation(value = "通过文章id获取文章(后台)")
     @GetMapping("/getArticleById")
-    public Result getArticleById(@RequestParam("articleId") Integer articleId) {
-        ArticleAddVO article = null;
-        try {
-            article = articleService.getArticleById(articleId);
-        } catch (Exception e) {
-            throw new ServiceException(ResultInfo.CODE_500,"系统错误");
-        }
-        Map<String, Object> map = new HashMap<>();
-        map.put("article",article);
-        return Result.success(map,"文章加载成功");
+    public ResultStandby<ArticleBackDTO> getArticleById(@RequestParam("articleId") Integer articleId) {
+        return success(articleService.getArticleById(articleId),SUCCESS.getDesc());
     }
 
+    @ApiOperation(value = "获取文章列表(后台)")
     @GetMapping("/listArticle")
-    public Result getListArticle(
-            @RequestParam(value = "pageNum",defaultValue = "1") Integer pageNum,
-            @RequestParam(value = "pageSize",defaultValue = "5") Integer pageSize,
-            @RequestParam(value = "articleTitle",defaultValue = "") String articleTitle
-                                 ){
-        pageNum = (pageNum - 1) * pageSize;
-        System.out.println(pageNum+"   "+pageSize+"   "+articleTitle);
-        List<ArticleDTO> articleList = articleService.getListArticle(pageNum, pageSize, articleTitle);
-        Map<String, Object> map = new HashMap<>();
-        map.put("articleList",articleList);
-        map.put("total",articleService.count());
-        return Result.success(map,"获取文章列表成功");
+    public ResultStandby<PageDTO<ArticleDTO>> getListArticle(ConditionVO conditionVO){
+        return success(articleService.getListArticle(conditionVO),SUCCESS.getDesc());
     }
 
-
-    @DeleteMapping("/deleteArticleById")
-    public Result deleteArticleById(@RequestParam("articleId") Integer articleId){
-        try {
-            articleService.removeById(articleId);
-        } catch (Exception e) {
-            throw new ServiceException(ResultInfo.CODE_500,"系统错误");
-        }
-        QueryWrapper<ArticleTag> wrapper = new QueryWrapper<>();
-        wrapper.eq("article_id",articleId);
-        try {
-            articleTagMapper.delete(wrapper);
-        } catch (Exception e) {
-            throw new ServiceException(ResultInfo.CODE_500,"系统错误");
-        }
-        return Result.success();
+    @ApiOperation(value = "逻辑删除文章")
+    @OptLog(optType = UPDATE)
+    @PutMapping("/del/batch")
+    public ResultStandby<?> updateArticleDelete(@Valid @RequestBody DeleteVO deleteVO){
+        articleService.updateArticleDelete(deleteVO);
+        return success(null,SUCCESS.getDesc());
     }
 
-    @PostMapping("/del/batch")
-    public Result deleteBatchById(@RequestBody List<Integer> ids){
-        if (ids.size() <= 0) {
-            throw new ServiceException(ResultInfo.CODE_500,"系统错误");
-        }
-        for (Integer articleId : ids) {
-            try {
-                articleService.removeById(articleId);
-            } catch (Exception e) {
-                throw new ServiceException(ResultInfo.CODE_500,"系统错误");
-            }
-            QueryWrapper<ArticleTag> wrapper = new QueryWrapper<>();
-            wrapper.eq("article_id",articleId);
-            try {
-                articleTagMapper.delete(wrapper);
-            } catch (Exception e) {
-                throw new ServiceException(ResultInfo.CODE_500,"系统错误");
-            }
-        }
-        return Result.success();
+    @ApiOperation(value = "物理删除文章")
+    @OptLog(optType = REMOVE)
+    @DeleteMapping("/del/batch")
+    public ResultStandby<?> deleteBatchById(@RequestBody List<Integer> ids){
+        articleService.deleteBatchById(ids);
+        return success();
     }
 
+    @ApiOperation(value = "文章置顶")
+    @OptLog(optType = UPDATE)
+    @PutMapping("/top")
+    public ResultStandby<?> updateTop(@Valid @RequestBody ArticleTopVO articleTopVO) {
+        articleService.updateTop(articleTopVO);
+        return success();
+    }
 
 }

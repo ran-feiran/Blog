@@ -1,5 +1,9 @@
 package com.zhao.dto;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
@@ -17,6 +21,9 @@ public class MessageDTO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    @TableId(value = "id", type = IdType.AUTO)
+    private Integer id;
+
     @ApiModelProperty(value = "//ip")
     private String ipAddress;
 
@@ -32,9 +39,13 @@ public class MessageDTO implements Serializable {
     @ApiModelProperty(value = "//留言内容")
     private String messageContent;
 
-    @ApiModelProperty(value = "//弹幕速度")
-    private Integer time;
-
     @ApiModelProperty(value = "//发布时间")
+    @TableField(fill = FieldFill.INSERT)
     private Date createTime;
+
+    @ApiModelProperty("//是否审核")
+    private Integer isReview;
+
+    @ApiModelProperty("//倍速")
+    private Integer time;
 }

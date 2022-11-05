@@ -3,6 +3,21 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.zhao.mapper.CategoryMapper">
 
+    <resultMap id="ArticleBlogDTOList" type="com.zhao.dto.ArticleBlogDTO">
+        <id property="articleId" column="article_id"/>
+        <result property="articleContent" column="article_content"/>
+        <result property="articleTitle" column="article_title"/>
+        <result property="articleCover" column="article_cover"/>
+        <result property="isTop" column="is_top"/>
+        <result property="createTime" column="create_time"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="categoryName" column="category_name"/>
+        <collection property="tagList" ofType="com.zhao.dto.TagDTO">
+            <result property="tagId" column="tag_id"/>
+            <result property="tagName" column="tag_name"/>
+        </collection>
+    </resultMap>
+
     <select id="listCategories" resultType="com.zhao.dto.CateGoryDTO">
         select
             c.category_id,
@@ -13,27 +28,60 @@
     <select id="queryArticleCountByCategoryId" resultType="int">
         select
             count(1) article_count
-        from myblog.tb_category c,myblog.tb_article a
+        from myblog.tb_category c,myblog.tb_new_article a
         where c.category_id = a.category_id
+          and a.is_delete = 0
           and c.category_id = #{id}
     </select>
 
-    <select id="listArticles" resultType="com.zhao.dto.ArticleBlogDTO">
+    <select id="listArticles" resultMap="ArticleBlogDTOList">
         select
-            a.article_id,
-            a.article_title,
-            a.article_content,
-            a.article_cover,
-            a.is_top,
-            a.create_time,
-            c.category_id,
-            c.category_name
-        from myblog.tb_article a,myblog.tb_category c
-        where a.category_id = c.category_id
+        a.article_id,
+        a.article_title,
+        a.article_content,
+        a.article_cover,
+        a.is_top,
+        a.create_time,
+        a.category_id,
+        a.category_name,
+        ta.tag_id,
+        ta.tag_name
+        from
+        (
+        select
+        a.article_id,
+        a.article_title,
+        a.article_content,
+        a.article_cover,
+        a.is_top,
+        a.create_time,
+        c.category_id,
+        c.category_name
+        from myblog.tb_new_article a
+        left join myblog.tb_category c on a.category_id = c.category_id
+        where
+        a.is_delete = 0
+        and a.status = 1
         <if test="categoryId != null and categoryId != ''">
             and a.category_id = #{categoryId}
         </if>
         order by a.is_top desc
-        limit #{current},1;
+        limit #{current},1
+        ) a
+        left join myblog.tb_article_tag at on a.article_id = at.article_id
+        left join myblog.tb_tag ta on ta.tag_id = at.tag_id
+    </select>
+
+    <select id="queryPageCategories" resultType="com.zhao.dto.CateGoryDTO">
+        select
+            c.category_id,
+            c.category_name
+        from myblog.tb_category c
+        <where>
+            <if test="condition.keywords != null and condition.keywords != ''">
+                and c.category_name = #{condition.keywords}
+            </if>
+        </where>
+        limit #{condition.current},#{condition.size}
     </select>
 </mapper>

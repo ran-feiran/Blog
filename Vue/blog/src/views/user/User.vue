@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="user-banner banner">
+    <div class="banner" :style="cover">
       <h1 class="banner-title">个人中心</h1>
     </div>
     <v-card class="blog-container">
@@ -27,12 +27,6 @@
             placeholder="请输入您的昵称"
           />
           <v-text-field
-              v-model="userInfo.email"
-              class="mt-7"
-              label="邮箱"
-              placeholder="请输入您的邮箱"
-          />
-          <v-text-field
             v-model="userInfo.webSite"
             class="mt-7"
             label="个人网站"
@@ -44,6 +38,20 @@
             label="简介"
             placeholder="介绍下自己吧"
           />
+          <div v-if="loginType != 0" class="mt-7 binding">
+            <v-text-field
+                disabled
+                v-model="email"
+                label="邮箱号"
+                placeholder="请绑定邮箱"
+            />
+            <v-btn v-if="email" text small @click="openEmailModel" class="bind-email">
+              修改绑定
+            </v-btn>
+            <v-btn v-else text small @click="openEmailModel" class="bind-email">
+              绑定邮箱
+            </v-btn>
+          </div>
           <v-btn @click="updateUserInfo" outlined class="mt-5">修改</v-btn>
         </v-col>
       </v-row>
@@ -62,18 +70,12 @@ export default {
         nickname: this.$store.state.nickname,
         intro: this.$store.state.intro,
         webSite: this.$store.state.webSite,
-        email:this.$store.state.email,
       }
     };
   },
   methods: {
+    // 更新用户信息
     updateUserInfo() {
-      let reg = /^[A-Za-z0-9\u4e00-\u9fa5]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/;
-      if (!reg.test(this.userInfo.email)) {
-        this.$toast({ type: "error", message: "邮箱格式不正确" });
-        return false;
-      }
-
       this.axios.put("/api/user/info", this.userInfo).then((res) => {
         const cons = res.data;
         if (cons.flag) {
@@ -84,25 +86,44 @@ export default {
         }
       });
     },
-
     // 更新头像
     uploadAvatar(data) {
-      // console.log(data)
       if (data.flag) {
-        this.$store.commit("updateAvatar", data.data.url);
-        this.$toast({ type: "success", message: data.message });
+        this.$store.commit("updateAvatar", data.data);
+        this.$toast({ type: "success", message: "上传成功" });
       } else {
         this.$toast({ type: "error", message: data.message });
       }
+    },
+    openEmailModel() {
+      this.$store.state.emailFlag = true;
+    }
+  },
+  computed:{
+    email() {
+      return this.$store.state.email;
+    },
+    loginType() {
+      return this.$store.state.loginType;
+    },
+    cover() {
+      var cover = "";
+      this.$store.state.blogInfo.pageList.forEach(item => {
+        if (item.pageLabel == "user") {
+          cover = item.pageCover;
+        }
+      });
+      return "background: url(" + cover + ") center center / cover no-repeat";
     }
   }
 };
 </script>
 
 <style scoped>
-.user-banner {
-  background: url("../../assets/img/11.jpg") center
-    center / cover no-repeat;
+.bind-email{
+  position: relative;
+  right: -444px;
+  top: -52px
 }
 .info-title {
   font-size: 1.25rem;

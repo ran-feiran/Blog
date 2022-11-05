@@ -35,4 +35,8 @@ public class CommentBackDTO implements Serializable {
 
     private  String createTime;
 
+    private Integer isReview;
+
+    private Integer type;
+
 }

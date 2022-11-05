@@ -8,8 +8,8 @@
         <!-- 用户名 -->
         <v-text-field
           v-model="username"
-          label="用户名"
-          placeholder="请输入您的用户名"
+          label="邮箱号"
+          placeholder="请输入您的邮箱号"
           clearable
           @keyup.enter="login"
         />
@@ -39,15 +39,23 @@
           <span @click="openRegister">立即注册</span>
           <span @click="openForget" class="float-right">忘记密码?</span>
         </div>
-        <div class="social-login-title">社交账号登录</div>
-        <div class="social-login-wrapper">
-          <!-- 微博登录 -->
-          <a
-            class="mr-3 iconfont iconweibo"
-            style="color:#e05244"
-          />
-          <!-- qq登录 -->
-          <a class="iconfont iconqq" style="color:#00AAEE"  />
+        <div v-if="socialLoginList.length > 0">
+          <div class="social-login-title">社交账号登录</div>
+          <div class="social-login-wrapper">
+            <!-- 微博登录 -->
+            <a
+                v-if="showLogin('weibo')"
+                class="mr-3 iconfont iconweibo"
+                style="color:#e05244"
+            />
+            <!-- qq登录 -->
+            <a
+                v-if="showLogin('qq')"
+                class="iconfont iconqq"
+                style="color:#00AAEE"
+                @click="qqLogin"
+            />
+          </div>
         </div>
       </div>
     </v-card>
@@ -64,6 +72,14 @@ export default {
     };
   },
   computed: {
+    socialLoginList() {
+      return this.$store.state.blogInfo.websiteConfig.socialLoginList;
+    },
+    showLogin() {
+      return function(type) {
+        return this.socialLoginList.indexOf(type) != -1;
+      };
+    },
     loginFlag: {
       set(value) {
         this.$store.state.loginFlag = value;
@@ -90,9 +106,9 @@ export default {
       this.$store.state.forgetFlag = true;
     },
     login() {
-      // var reg = /^[A-Za-z0-9\u4e00-\u9fa5]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/;
-      if (this.username.length === 0) {
-        this.$toast({ type: "error", message: "用户名不能为空" });
+      let reg = /^[A-Za-z0-9\u4e00-\u9fa5]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/;
+      if (!reg.test(this.username)) {
+        this.$toast({ type: "error", message: "邮箱格式不正确" });
         return false;
       }
       if (this.password.trim().length === 0) {
@@ -110,7 +126,7 @@ export default {
             if (res.ret === 0) {
               that.axios.post("/api/login", param).then((res) => {
                 const cons = res.data
-                console.log(cons)
+                // console.log(cons)
                 if (cons.flag) {
                   that.username = "";
                   that.password = "";
@@ -127,19 +143,33 @@ export default {
       // 显示验证码
       captcha.show();
     },
+    qqLogin() {
+      // 三方授权登录路径保存
+      this.$store.commit("saveLoginUrl", this.$route.path);
+      if (
+          navigator.userAgent.match(
+              /(iPhone|iPod|Android|ios|iOS|iPad|Backerry|WebOS|Symbian|Windows Phone|Phone)/i
+          )
+      ) {
+        // eslint-disable-next-line no-undef
+        QC.Login.showPopup({
+          appId: this.config.QQ_APP_ID,
+          redirectURI: this.config.QQ_REDIRECT_URI
+        });
+      } else {
+        window.open(
+            "https://graph.qq.com/oauth2.0/show?which=Login&display=pc&client_id=" +
+            + this.config.QQ_APP_ID +
+            "&response_type=token&scope=all&redirect_uri=" +
+            this.config.QQ_REDIRECT_URI,
+            "_self"
+        );
+      }
+    },
 
 
 
 
-    // qqLogin() {
-    //   //保留当前路径
-    //   this.$store.commit("saveLoginUrl", this.$route.path);
-    //   // eslint-disable-next-line no-undef
-    //   QC.Login.showPopup({
-    //     appId: this.config.QQ_APP_ID,
-    //     redirectURI: this.config.QQ_REDIRECT_URI
-    //   });
-    // },
     // weiboLogin() {
     //   //保留当前路径
     //   this.$store.commit("saveLoginUrl", this.$route.path);

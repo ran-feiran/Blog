@@ -1,52 +1,74 @@
 package com.zhao.service;
 
-import cn.hutool.core.date.DateTime;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.alibaba.fastjson2.JSON;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.mysql.jdbc.StringUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zhao.api.RedisService;
-import com.zhao.constant.DefaultUser;
-import com.zhao.constant.RedisPrefixConst;
-import com.zhao.result.ResultInfo;
-import com.zhao.api.RoleService;
 import com.zhao.api.UserService;
+import com.zhao.api.WebsiteConfigService;
+import com.zhao.dto.EmailDTO;
+import com.zhao.dto.PageDTO;
 import com.zhao.dto.UserDTO;
 import com.zhao.dto.UserSignalDTO;
-import com.zhao.exception.div.ServiceException;
+import com.zhao.enums.FilePathEnum;
+import com.zhao.exception.ServiceException;
 import com.zhao.mapper.RoleUserMapper;
 import com.zhao.mapper.UserMapper;
-import com.zhao.pojo.Role;
 import com.zhao.pojo.RoleUser;
 import com.zhao.pojo.User;
-import com.zhao.vo.UserQueryVO;
-import com.zhao.vo.UserRegisterVO;
+import com.zhao.strategy.context.SocialLoginStrategyContext;
+import com.zhao.strategy.context.UploadStrategyContext;
+import com.zhao.utils.UserUtil;
+import com.zhao.vo.*;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageProperties;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.*;
+
+import static com.zhao.constant.CommonConst.*;
+import static com.zhao.constant.DefaultUser.NICKNAME;
+import static com.zhao.constant.MQPrefixConst.FANOUT_EMAIL_EXCHANGE;
+import static com.zhao.constant.RedisPrefixConst.CODE_EXPIRE_TIME;
+import static com.zhao.constant.RedisPrefixConst.USER_EMAIL_KEY;
+import static com.zhao.enums.LoginTypeEnum.EMAIL;
+import static com.zhao.enums.LoginTypeEnum.QQ;
+import static com.zhao.enums.StatusCodeEnum.FAIL;
+import static com.zhao.enums.StatusCodeEnum.SYSTEM_ERROR;
+import static com.zhao.utils.CommonUtil.*;
 
 @Service
+@Slf4j
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
     @Autowired
-    UserMapper userMapper;
+    private UserMapper userMapper;
 
     @Autowired
-    RoleService roleService;
-
-    @Autowired
-    RoleUserMapper roleUserMapper;
-
-    @Autowired
-    EmailMapperImpl emailMapper;
+    private RoleUserMapper roleUserMapper;
 
     @Autowired
     private RedisService redisService;
+
+    @Autowired
+    private SocialLoginStrategyContext socialLoginStrategyContext;
+
+    @Autowired
+    private UploadStrategyContext uploadStrategyContext;
+
+    @Autowired
+    private WebsiteConfigService websiteConfigService;
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
 
     @Override
     public List<String> getUserRolesByUserId(Integer id) {
@@ -54,37 +76,25 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public List<UserDTO> getUserList(UserQueryVO userQueryVO) {
-        return userMapper.getUserList(userQueryVO);
-    }
-
-    @Override
-    public int updateUserById(UserDTO userDTO) {
-        userDTO.setUpdateTime(new DateTime());
-        return userMapper.updateUserById(userDTO);
-    }
-
-    @Override
-    public int addUser(UserDTO userDTO) {
-        userDTO.setCreateTime(new DateTime());
-        int i = userMapper.addUser(userDTO);
-        if (i <= 0) {
-            throw new ServiceException(ResultInfo.CODE_600,"添加用户失败,或用户名重复");
+    public PageDTO<UserDTO> getUserList(ConditionVO conditionVO) {
+        // 查询所有的用户
+        Long count = userMapper.selectCount(null);
+        if (count == null || count == 0) {
+            return new PageDTO<>(new ArrayList<>() , 0);
         }
-        QueryWrapper<User> wrapper = new QueryWrapper<>();
-        wrapper.eq("username",userDTO.getUsername());
-        User user = userMapper.selectOne(wrapper);
-
-        RoleUser roleUser = new RoleUser();
-        roleUser.setUserId(user.getUserId());
-        roleUser.setRoleId(2);
-        roleUserMapper.insert(roleUser);
-        return i;
+        // 查询所有的用户
+        conditionVO.setCurrent((conditionVO.getCurrent() - 1) * conditionVO.getSize());
+        return new PageDTO<>(userMapper.getUserList(conditionVO), count);
     }
 
+
+    @Transactional(rollbackFor = Exception.class)
     @Override
-    public int updateSilenceById(boolean isSilence, Integer userId) {
-        return userMapper.updateSilenceById(isSilence, userId);
+    public void updateSilenceById(UserSilenceVO userSilenceVO) {
+        userMapper.updateSilenceById(userSilenceVO.getIsSilence(), userSilenceVO.getUserId());
+        User loginUser = UserUtil.getLoginUser();
+        assert loginUser != null;
+        loginUser.setIsSilence(userSilenceVO.getIsSilence());
     }
 
     @Override
@@ -92,104 +102,153 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return userMapper.getUserRoleList(current, size, nickname);
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
-    public int updateUserRole(UserSignalDTO userSignalDTO) {
-        Integer userId = userSignalDTO.getUserId();
-        QueryWrapper<RoleUser> wrapper = new QueryWrapper<>();
-        QueryWrapper<Role> wrapper1 = new QueryWrapper<>();
-        wrapper1.eq("role_name", userSignalDTO.getRoleName());
-        Role role = roleService.getOne(wrapper1);
-        wrapper.eq("user_id",userId);
-        RoleUser roleUser = new RoleUser();
-        roleUser.setUserId(userId);
-        roleUser.setRoleId(role.getRoleId());
-        return roleUserMapper.update(roleUser, wrapper);
+    public void updateUserRole(UserRoleVO userRoleVO) {
+        // 更新用户角色和昵称
+        User user = User
+                        .builder()
+                        .userId(userRoleVO.getUserId())
+                        .nickname(userRoleVO.getNickname())
+                        .build();
+        userMapper.updateById(user);
+        // 添加角色
+        if (userRoleVO.getRoleIdList().size() > 1) {
+            throw new ServiceException(SYSTEM_ERROR.getCode(),SYSTEM_ERROR.getDesc());
+        }
+        Integer roleId = userRoleVO.getRoleIdList().get(0);
+        RoleUser roleUser = RoleUser
+                                .builder()
+                                .roleId(roleId)
+                                .userId(userRoleVO.getUserId())
+                                .build();
+        roleUserMapper.update(roleUser, new LambdaQueryWrapper<RoleUser>()
+                .eq(RoleUser::getUserId, userRoleVO.getUserId()));
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public void sendCode(String email) {
-        if (!checkEmail(email)) {
-            throw new ServiceException(ResultInfo.CODE_600,"邮箱格式不正确");
+        Integer isEmailNotice = websiteConfigService.getWebsiteConfig().getIsEmailNotice();
+        if (isEmailNotice == 0) {
+            throw new ServiceException(FAIL.getCode(), "管理员已关闭邮箱通知");
         }
+        if (!checkEmail(email)) {
+            throw new ServiceException(FAIL.getCode(),"邮箱格式不正确");
+        }
+        String code = getRandomCode();
         // 发送验证码
-        String code = emailMapper.sendEmail(email);
-        //在把验证码放到redis 有效时间存为15分钟 这样就可以了
-        redisService.set(RedisPrefixConst.USER_EMAIL_KEY + email, code, RedisPrefixConst.CODE_EXPIRE_TIME);
+        EmailDTO emailDTO = EmailDTO.builder()
+                .email(email)
+                .subject(EMAIL_SUBJECT + "验证码")
+                .content(EMAIL_TEXT_PRE + code + EMAIL_TEXT_POST)
+                .build();
+        // 发送到消息队列中
+        rabbitTemplate.convertAndSend(FANOUT_EMAIL_EXCHANGE,"*",new Message(JSON.toJSONBytes(emailDTO), new MessageProperties()));
+        //在把验证码放到redis 有效时间存为15分钟
+        redisService.set(USER_EMAIL_KEY + email, code, CODE_EXPIRE_TIME);
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public void registerUser(UserRegisterVO userRegisterVO) {
-        String email = userRegisterVO.getEmail();
-        String code = userRegisterVO.getCode();
-        String o = (String) redisService.get(RedisPrefixConst.USER_EMAIL_KEY + email);
-
-        if (StringUtils.isNullOrEmpty(o)) {
-            throw new ServiceException(ResultInfo.CODE_600,"验证码已过期");
-        }
-        if (!code.equals(o)) {
-            throw new ServiceException(ResultInfo.CODE_600,"验证码错误");
-        }
-        User user = new User();
-        user.setEmail(email);
-        user.setUsername(userRegisterVO.getUsername());
-        //加密密码
-        String password = new BCryptPasswordEncoder().encode(userRegisterVO.getPassword());
-        user.setPassword(password);
-        //设置默认头像
-        user.setAvatar(DefaultUser.DEFAULT_AVATAR);
-        //设置默认昵称
-        user.setNickname(DefaultUser.NICKNAME+ UUID.randomUUID().
-                toString().
-                replaceAll("-","").
-                replaceAll("[a-zA-Z]", String.valueOf(new Random().nextInt(10))).
-                substring(0,9)
-        );
-        try {
+        WebsiteConfigVO websiteConfig = websiteConfigService.getWebsiteConfig();
+        String email = confirmEmailCode(userRegisterVO, redisService);
+        User user = User.builder()
+                .avatar(websiteConfig.getUserAvatar())
+                .password(BCrypt.hashpw(userRegisterVO.getPassword(), BCrypt.gensalt()))
+                .email(email)
+                .username(email)
+                .loginType(EMAIL.getId())
+                .nickname(NICKNAME + UUID.randomUUID().toString().
+                                replaceAll("-","").
+                                replaceAll("[a-zA-Z]", String.valueOf(new Random().nextInt(9) + 1)).
+                                substring(0,9))
+                .build();
+        if (Objects.nonNull(userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getEmail, email)))) {
+            throw new ServiceException(FAIL.getCode(),"邮箱已被他人占用");
+        } else {
             userMapper.insert(user);
-        } catch (Exception e) {
-            throw new ServiceException(ResultInfo.CODE_600,"用户名重复或邮箱已被他人占用");
         }
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public void forgetPassword(UserRegisterVO userRegisterVO) {
-        String email = userRegisterVO.getEmail();
-        String code = userRegisterVO.getCode();
-        String o = (String) redisService.get(RedisPrefixConst.USER_EMAIL_KEY + email);
-
-        if (StringUtils.isNullOrEmpty(o)) {
-            throw new ServiceException(ResultInfo.CODE_600,"验证码已过期");
-        }
-        if (!code.equals(o)) {
-            throw new ServiceException(ResultInfo.CODE_600,"验证码错误");
-        }
-        User user = new User();
-        //加密密码
-        String password = new BCryptPasswordEncoder().encode(userRegisterVO.getPassword());
-        user.setPassword(password);
-        QueryWrapper<User> wrapper = new QueryWrapper<>();
-        wrapper.eq("email",email);
-        User one = userMapper.selectOne(wrapper);
-        if (one != null) {
-            userMapper.update(user,wrapper);
+        String email = confirmEmailCode(userRegisterVO, redisService);
+        User existUser = userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getEmail, email));
+        if (existUser != null) {
+            User user = User
+                    .builder()
+                    .password(BCrypt.hashpw(userRegisterVO.getPassword(), BCrypt.gensalt()))
+                    .build();
+            userMapper.update(user,new LambdaQueryWrapper<User>().eq(User::getEmail, email));
         } else {
-            throw new ServiceException(ResultInfo.CODE_600,"用户不存在");
+            throw new ServiceException(FAIL.getCode(),"用户不存在");
         }
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public User qqLogin(QQLoginVO qqLoginVO) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        return socialLoginStrategyContext.executeLoginStrategy(mapper.writeValueAsString(qqLoginVO), QQ.getId());
+    }
 
-    /**
-     * 检测邮箱是否合法
-     * @param username 用户名
-     * @return 合法状态
-     */
-    private boolean checkEmail(String username) {
-        String RULE_EMAIL = "^\\w+((-\\w+)|(\\.\\w+))*\\@[A-Za-z0-9]+((\\.|-)[A-Za-z0-9]+)*\\.[A-Za-z0-9]+$";
-        //正则表达式的模式 编译正则表达式
-        Pattern p = Pattern.compile(RULE_EMAIL);
-        //正则表达式的匹配器
-        Matcher m = p.matcher(username);
-        //进行正则匹配
-        return m.matches();
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void saveEmail(UserRegisterVO userRegisterVO) {
+        String email = confirmEmailCode(userRegisterVO, redisService);
+        User loginUser = UserUtil.getLoginUser();
+        assert loginUser != null;
+        if (loginUser.getEmail() != null && loginUser.getEmail().equals(email)) {
+            throw new ServiceException(FAIL.getCode(), "该邮箱已被绑定");
+        } else  {
+            loginUser.setEmail(email);
+            try {
+                userMapper.update(loginUser, new LambdaQueryWrapper<User>().eq(User::getUserId,loginUser.getUserId()));
+            } catch (Exception e) {
+                log.info("堆栈信息：{}",e.getMessage());
+                throw new ServiceException(FAIL.getCode(), "该邮箱已被绑定");
+            }
+        }
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void updateUserInfo(UserInfoVO userInfoVO) {
+        User loginUser = UserUtil.getLoginUser();
+        assert loginUser != null;
+        loginUser.
+                setWebSite(userInfoVO.getWebSite()).
+                setNickname(userInfoVO.getNickname()).
+                setIntro(userInfoVO.getIntro());
+        try {
+            userMapper.update(loginUser, new LambdaQueryWrapper<User>().eq(User::getUserId, userInfoVO.getUserId()));
+        } catch (Exception e) {
+            throw new ServiceException(FAIL.getCode(), FAIL.getDesc());
+        }
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void updatePassword(PasswordVO passwordVO) {
+        User loginUser = Objects.requireNonNull(UserUtil.getLoginUser());
+        ConfirmPasswordBackInfo(passwordVO, loginUser);
+        loginUser.setPassword(BCrypt.hashpw(passwordVO.getNewPassword(), BCrypt.gensalt()));
+        userMapper.update(loginUser, new LambdaQueryWrapper<User>().eq(User::getUserId, loginUser.getUserId()));
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public String uploadAvatar(MultipartFile file) {
+        String src = uploadStrategyContext.executeUploadStrategy(file, FilePathEnum.AVATAR.getPath());
+        User user =User
+                        .builder()
+                        .userId(Objects.requireNonNull(UserUtil.getLoginUser()).getUserId())
+                        .avatar(src)
+                        .build();
+        userMapper.updateById(user);
+        return src;
     }
 }

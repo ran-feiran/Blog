@@ -1,54 +1,54 @@
 package com.zhao.dto;
 
+import com.zhao.vo.PageVO;
+import com.zhao.vo.WebsiteConfigVO;
 import io.swagger.annotations.ApiModel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @ApiModel(value = "BlogHomeInfo对象",description = "博客信息")
 public class BlogHomeInfoDTO {
-    /**
-     * 博主昵称
-     */
-    private String nickname;
-
-    /**
-     * 博主头像
-     */
-    private String avatar;
-
-    /**
-     * 博主简介
-     */
-    private String intro;
 
     /**
      * 文章数量
      */
-    private long articleCount;
+    private Long articleCount;
 
     /**
      * 分类数量
      */
-    private long categoryCount;
+    private Long categoryCount;
 
     /**
      * 标签数量
      */
-    private long tagCount;
+    private Long tagCount;
 
     /**
-     * 公告
+     * 独特访客
      */
-    private String notice;
+    private Long uniqueVisitor;
 
     /**
      * 访问量
      */
     private Integer viewsCount;
+
+    /**
+     * 网站配置签证官
+     */
+    private WebsiteConfigVO websiteConfig;
+
+    /**
+     * 页面列表
+     */
+    private List<PageVO> pageList;
 
 
 }

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.annotations.ApiModel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -16,6 +17,7 @@ import java.util.Date;
 @NoArgsConstructor
 @TableName("tb_category")
 @ApiModel("分类表")
+@Builder
 public class Category implements Serializable {
     private static final long serialVersionUID = 1L;
 

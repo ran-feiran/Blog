@@ -5,6 +5,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
+/**
+ * 一周用户量集合
+ *
+ * @author ran-feiran
+ * @date 2022/10/03
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

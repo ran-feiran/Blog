@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
@@ -17,8 +18,9 @@ import java.io.Serializable;
 @ApiModel(value="RoleApi对象", description="")
 @AllArgsConstructor
 @NoArgsConstructor
-@TableName("tb_role_api")
+@TableName("tb_role_resource")
 @Accessors(chain = true)
+@Builder
 public class RoleApi implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -29,6 +31,6 @@ public class RoleApi implements Serializable {
     @ApiModelProperty(value = "//角色id")
     private Integer roleId;
 
-    @ApiModelProperty(value = "//父id")
-    private Integer apiId;
+    @ApiModelProperty(value = "//资源id")
+    private Integer resourceId;
 }

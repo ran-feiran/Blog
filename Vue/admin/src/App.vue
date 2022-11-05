@@ -1,10 +1,28 @@
 <template>
   <div id="app">
-    <router-view/>
+    <router-view />
   </div>
 </template>
 
-<style lang="scss">
+<script>
+import { generaMenu } from "./assets/js/menu";
+import { loadLoginPage } from "./util/login"
+export default {
+  created() {
+    // 刷新页面查询用户菜单
+    if (this.$store.state.userId != null) {
+      generaMenu();
+    }
+    // 加载背景图片
+    loadLoginPage()
+    // 上传访客信息
+    this.axios.post("/api/blogInfo/report")
+  }
+};
+</script>
+
+
+<style>
 ::-webkit-scrollbar{
   display: none;
 }

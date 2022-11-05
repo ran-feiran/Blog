@@ -21,6 +21,7 @@ import java.util.Date;
 @ApiModel(value="UserLogin对象", description="用户登录记录")
 @TableName("tb_user_login")
 @Accessors(chain = true)
+@Builder
 public class UserLogin implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -34,14 +35,12 @@ public class UserLogin implements Serializable {
 
     private String ipSources;
 
-    private String loginType;
-
-    private Date loginTime;
-
     private Date lastLoginTime;
 
     private String avatar;
 
-    private boolean status;// 上线，下线
+    private String os;
+
+    private String browser;
 
 }

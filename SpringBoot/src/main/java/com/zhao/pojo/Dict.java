@@ -13,7 +13,7 @@ import java.io.Serializable;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@TableName("tb_dict")
+@TableName("tb_icon_dict")
 public class Dict implements Serializable {
 
     private static final long serialVersionUID = 1L;

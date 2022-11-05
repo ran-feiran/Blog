@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @SuppressWarnings("all")
-public class HTMLUtil {
+public final class HTMLUtil {
 
     private static final SensitiveWordBs WORD_BS = SensitiveWordBs.newInstance()
             .ignoreCase(true)
@@ -28,7 +28,8 @@ public class HTMLUtil {
      */
     public static String deleteArticleTag(String source) {
         //删除HTML和markdown标签
-        source = source.replaceAll("!\\[\\]\\((.*?)\\)", "").replaceAll("<[^>]+>", "");
+        source = source.replaceAll("!\\[\\]\\((.*?)\\)", "")
+                .replaceAll("<[^>]+>", "");
         return deleteTag(source);
     }
 

@@ -17,8 +17,43 @@ export default {
     const that = this;
     //关闭登录框
     that.$store.state.loginFlag = false;
-    //通过路径判断是微博登录还是qq登录
-
+    // 拿到openId，accessToken传入后台
+    if (QC.Login.check()) {
+      QC.Login.getMe(function(openId, accessToken) {
+        that.axios
+            .post("/api/user/oauth/qq", {
+              openId: openId,
+              accessToken: accessToken
+            })
+            .then((res) => {
+              const cons = res.data;
+              // console.log(cons)
+              if (cons.flag) {
+                //保存登录状态
+                that.$store.commit("loginBlog", cons.data);
+                if (cons.data.user.email == null) {
+                  that.$toast({
+                    type: "warning",
+                    message: "请绑定邮箱以便及时收到回复"
+                  });
+                } else {
+                  that.$toast({ type: "success", message: cons.message });
+                }
+              } else {
+                that.$toast({ type: "error", message: cons.message });
+              }
+            });
+      });
+    } else {
+      that.$toast({ type: "error", message: "系统错误！" });
+    }
+    // 跳转回原页面
+    const loginUrl = that.$store.state.loginUrl;
+    if (loginUrl != null && loginUrl != "") {
+      that.$router.push({ path: loginUrl });
+    } else {
+      that.$router.push({ path: "/" });
+    }
   }
 };
 </script>

@@ -12,7 +12,7 @@
            alt=""/>
           <img
             v-else
-            src="https://gravatar.loli.net/avatar/d41d8cd98f00b204e9800998ecf8427e?d=mp&v=1.4.14"
+            :src="this.$store.state.blogInfo.websiteConfig.touristAvatar"
            alt=""/>
         </v-avatar>
         <div style="width:100%" class="ml-3">
@@ -185,7 +185,6 @@
           <!-- 回复框 -->
           <Reply ref="reply" @reloadReply="reloadReply" />
 <!--          提交评论成功后会触发reloadReply这个方法刷新回复-->
-
         </div>
       </div>
       <!-- 加载按钮 -->
@@ -239,7 +238,7 @@ export default {
         return false;
       }
       //发送请求
-      this.axios.post("/api/comment/"+comment.id+"/like").then((res) => {
+      this.axios.post("/api/comment/like/"+comment.id).then((res) => {
         const cons = res.data;
         if (cons.flag) {
           //判断是否点赞
@@ -252,25 +251,25 @@ export default {
         }
       });
     },
-
     // 添加表情
     addEmoji(key) {
       this.commentContent += key;
     },
-
     insertComment() {
       // 判断登录
       if (!this.$store.state.userId) {
         this.$store.state.loginFlag = true;
         return false;
       }
-
       //判空
       if (this.commentContent.trim() === "") {
         this.$toast({ type: "error", message: "评论不能为空" });
         return false;
       }
-
+      if (this.commentContent.trim().length > 100) {
+        this.$toast({ type: "error", message: "评论保持在100词之内" });
+        return false;
+      }
       //解析表情
       let reg = /\[.+?\]/g;
       this.commentContent = this.commentContent.replace(reg, function(str) {
@@ -280,7 +279,6 @@ export default {
             "' width='22' height='20' style='padding: 0 1px'/>"
         );
       });
-
       //发送请求
       const path = this.$route.path;
       const arr = path.split("/");
@@ -288,12 +286,10 @@ export default {
         articleId: arr[2],
         commentContent: this.commentContent
       };
-
       this.commentContent = "";
       this.axios.post("/api/comment/comments", comment).then((res) => {
         const cons = res.data;
         if (cons.flag) {
-          //查询最新评论
           // 查询最新评论  体现在数据库是按时间降序查找
           this.$emit("reloadComment",arr[2])
           this.$toast({ type: "success", message: cons.message });
@@ -329,7 +325,6 @@ export default {
           })
           .then((res) => {
             const cons = res.data;
-            console.log(cons);
             this.commentList[index].replyCount++;
             //回复大于5条展示分页
             if (this.commentList[index].replyCount > 5) {
@@ -337,7 +332,7 @@ export default {
             }
             this.$refs.check[index].style.display = "none";
             this.$refs.reply[index].$el.style.display = "none";
-            this.commentList[index].replyDTOList = cons.data.data;
+            this.commentList[index].replyDTOList = cons.data;
           });
     },
 
@@ -363,7 +358,7 @@ export default {
           })
           .then((res) => {
             const cons = res.data;
-            this.commentList[index].replyDTOList = cons.data.data;
+            this.commentList[index].replyDTOList = cons.data;
           });
     },
 
@@ -376,7 +371,7 @@ export default {
             const cons = res.data;
             console.log(cons)
             this.$refs.check[index].style.display = "none";
-            item.replyDTOList = cons.data.data;
+            item.replyDTOList = cons.data;
             //超过1页才显示分页
             if (Math.ceil(item.replyCount / 5) > 1) {
               this.$refs.paging[index].style.display = "flex";

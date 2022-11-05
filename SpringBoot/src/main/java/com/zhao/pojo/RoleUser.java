@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import io.swagger.annotations.ApiModel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -16,6 +17,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @TableName("tb_role_user")
 @ApiModel(value = "角色-用户表")
+@Builder
 public class RoleUser implements Serializable {
     private static final long serialVersionUID = 1L;
 

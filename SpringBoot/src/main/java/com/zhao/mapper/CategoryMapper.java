@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.zhao.dto.ArticleBlogDTO;
 import com.zhao.dto.CateGoryDTO;
 import com.zhao.pojo.Category;
+import com.zhao.vo.ConditionVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
@@ -23,4 +24,6 @@ public interface CategoryMapper extends BaseMapper<Category> {
      */
     List<ArticleBlogDTO> listArticles(@Param("categoryId") Integer categoryId,
                                       @Param("current") Integer current);
+
+    List<CateGoryDTO> queryPageCategories(@Param("condition") ConditionVO conditionVO);
 }

@@ -2,11 +2,63 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.zhao.mapper.RoleMapper">
-    <select id="queryRole" resultType="com.zhao.dto.RoleListDto">
+
+    <resultMap id="RoleBack" type="com.zhao.dto.RoleBackDTO">
+        <id property="roleId" column="role_id"/>
+        <result property="roleName" column="role_name"/>
+        <result property="roleLabel" column="role_label"/>
+        <result property="createTime" column="create_time"/>
+        <result property="isDisable" column="is_disable"/>
+        <collection property="menuIdList" ofType="java.lang.Integer">
+            <constructor>
+                <arg column="menu_id"/>
+            </constructor>
+        </collection>
+        <collection property="resourceIdList" ofType="java.lang.Integer">
+            <constructor>
+                <arg column="resource_id"/>
+            </constructor>
+        </collection>
+    </resultMap>
+
+    <select id="queryRole" resultType="com.zhao.dto.RoleListDTO">
         select
-            r.role_name,
-            count(r.role_name) size
+            r.role_id id,
+            r.role_label
         from myblog.tb_role r
-        group by r.role_name
+        where r.is_delete = 0
+        order by r.role_id
+    </select>
+
+    <select id="listRoles"  resultMap="RoleBack">
+        SELECT
+            r.role_id,
+            role_name,
+            role_label,
+            r.create_time,
+            r.is_disable,
+            rr.resource_id,
+            rm.menu_id
+        FROM
+        (
+        SELECT
+        r.role_id,
+        r.role_name,
+        r.role_label,
+        r.create_time,
+        r.is_disable
+        FROM
+        myblog.tb_role r
+        <where>
+            r.is_delete = 0
+            <if test="condition.keywords != null and condition.keywords != ''">
+                and role_name like concat('%',#{condition.keywords},'%')
+            </if>
+        </where>
+        LIMIT #{condition.current}, #{condition.size}
+        ) r
+        LEFT JOIN myblog.tb_role_resource rr ON r.role_id = rr.role_id
+        LEFT JOIN myblog.tb_role_menu rm on r.role_id = rm.role_id
+        ORDER BY r.role_id
     </select>
 </mapper>

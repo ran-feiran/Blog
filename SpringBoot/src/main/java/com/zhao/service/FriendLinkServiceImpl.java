@@ -1,31 +1,40 @@
 package com.zhao.service;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.mysql.jdbc.StringUtils;
 import com.zhao.api.FriendLinkService;
+import com.zhao.dto.FriendLinkBackDTO;
+import com.zhao.dto.PageDTO;
 import com.zhao.mapper.FriendLinkMapper;
 import com.zhao.pojo.FriendLink;
+import com.zhao.utils.BeanCopyUtil;
+import com.zhao.vo.ConditionVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
 
 
 @Service
 public class FriendLinkServiceImpl extends ServiceImpl<FriendLinkMapper, FriendLink> implements FriendLinkService {
 
     @Autowired
-    FriendLinkMapper friendLinkMapper;
+    private FriendLinkMapper friendLinkMapper;
 
     @Override
-    public IPage<FriendLink> getFriendLinkList(Integer current, Integer size, String nickname) {
-        Page<FriendLink> page = new Page<>(current, size);
-        QueryWrapper<FriendLink> wrapper = null;
-        if (!StringUtils.isNullOrEmpty(nickname)) {
-            wrapper = new QueryWrapper<>();
-            wrapper.like("nickname", nickname);
+    public PageDTO<FriendLinkBackDTO> getFriendLinkList(ConditionVO conditionVO) {
+        Long count = friendLinkMapper.selectCount(null);
+        if (count == null || count == 0) {
+            return new PageDTO<>(new ArrayList<>(), 0);
         }
-        return friendLinkMapper.selectPage(page, wrapper);
+        conditionVO.setCurrent((conditionVO.getCurrent() - 1) * conditionVO.getSize());
+        return new PageDTO<>(friendLinkMapper.getFriendLinkList(conditionVO), count);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void addOrEditFriendLink(FriendLinkBackDTO friendLink) {
+        saveOrUpdate(BeanCopyUtil.copyObject(friendLink, FriendLink.class));
     }
 }

@@ -49,6 +49,12 @@ public class Comment implements Serializable {
     @TableLogic(value = "0", delval = "1")
     private Boolean isDelete;
 
+    @ApiModelProperty(value = "//类型")
+    private Integer type;
+
+    @ApiModelProperty(value = "//审核")
+    private Integer isReview;
+
 
 }
 

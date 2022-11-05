@@ -19,7 +19,7 @@ import java.util.Map;
 @SuppressWarnings("all")
 @Slf4j
 @Component
-public class IpUtil {
+public final class IpUtil {
 
     /**
      * 获取ip
@@ -30,14 +30,11 @@ public class IpUtil {
         String ipAddress = null;
         try {
             ipAddress = request.getHeader("x-forwarded-for");
-            log.info("ip地址：6 "+ ipAddress);
             if (ipAddress == null || ipAddress.length() == 0 || "unknown".equalsIgnoreCase(ipAddress)) {
                 ipAddress = request.getHeader("Proxy-Client-IP");
-                log.info("ip地址：1 "+ ipAddress);
             }
             if (ipAddress == null || ipAddress.length() == 0 || "unknown".equalsIgnoreCase(ipAddress)) {
                 ipAddress = request.getHeader("WL-Proxy-Client-IP");
-                log.info("ip地址： 2"+ ipAddress);
             }
             if (ipAddress == null || ipAddress.length() == 0 || "unknown".equalsIgnoreCase(ipAddress)) {
                 ipAddress = request.getRemoteAddr();
@@ -50,16 +47,13 @@ public class IpUtil {
                         e.printStackTrace();
                     }
                     ipAddress = inet.getHostAddress();
-                    log.info("ip地址：3 "+ ipAddress);
                 }
-                log.info("ip地址：5 "+ ipAddress);
             }
             // 对于通过多个代理的情况，第一个IP为客户端真实IP,多个IP按照','分割
             if (ipAddress != null && ipAddress.length() > 15) {
                 // = 15
                 if (ipAddress.indexOf(",") > 0) {
                     ipAddress = ipAddress.substring(0, ipAddress.indexOf(","));
-                    log.info("ip地址：4 "+ ipAddress);
                 }
             }
         } catch (Exception e) {

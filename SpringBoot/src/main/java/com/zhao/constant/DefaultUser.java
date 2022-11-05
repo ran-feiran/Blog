@@ -1,6 +1,19 @@
 package com.zhao.constant;
 
-public interface DefaultUser {
-     String DEFAULT_AVATAR="https://gravatar.loli.net/avatar/d41d8cd98f00b204e9800998ecf8427e?d=mp&v=1.4.14" ;
-     String NICKNAME="BLOG_UID:";
+
+import org.springframework.stereotype.Component;
+
+/**
+ * 默认用户
+ *
+ * @author ran-feiran
+ * @date 2022/09/27
+ */
+@Component
+public class DefaultUser {
+
+     @Deprecated
+     public static final String DEFAULT_AVATAR="https://static.ran-feiran.cn/config/default_avatar.jpg";
+
+     public static final String NICKNAME="bid_";
 }

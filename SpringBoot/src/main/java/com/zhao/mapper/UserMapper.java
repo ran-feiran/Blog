@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.zhao.dto.UserDTO;
 import com.zhao.dto.UserSignalDTO;
 import com.zhao.pojo.User;
+import com.zhao.vo.ConditionVO;
 import com.zhao.vo.UserQueryVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -28,7 +29,7 @@ public interface UserMapper extends BaseMapper<User> {
      * @param userQueryVO
      * @return
      */
-    List<UserDTO> getUserList(@Param("userQueryVO") UserQueryVO userQueryVO);
+    List<UserDTO> getUserList(@Param("condition") ConditionVO conditionVO);
 
     /**
      * 查询用户角色列表
@@ -61,5 +62,6 @@ public interface UserMapper extends BaseMapper<User> {
      * @param userId
      * @return
      */
-    int updateSilenceById(@Param("isSilence") boolean isSilence, @Param("userId") Integer userId);
+    Integer updateSilenceById(@Param("isSilence") Integer isSilence,
+                              @Param("userId") Integer userId);
 }

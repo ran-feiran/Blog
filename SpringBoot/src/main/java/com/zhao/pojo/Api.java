@@ -1,8 +1,6 @@
 package com.zhao.pojo;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
@@ -10,9 +8,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.Date;
 
 @Data
-@TableName("tb_api")
+@TableName("tb_resource")
 @ApiModel(value="Api对象", description="")
 @AllArgsConstructor
 @NoArgsConstructor
@@ -23,25 +22,27 @@ public class Api implements Serializable {
     @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
 
-    @ApiModelProperty(value = "//父id")
-    private Integer apiId;
+    @ApiModelProperty(value = "//资源名")
+    private String resourceName;
 
-    @ApiModelProperty(value = "//api名")
-    private String name;
-
-    @ApiModelProperty(value = "//请求地址")
+    @ApiModelProperty(value = "//资源路径")
     private String url;
 
-    @ApiModelProperty(value = "请求方式")
-    private String method;
+    @ApiModelProperty(value = "//请求方式")
+    private String requestMethod;
 
-    @ApiModelProperty(value = "父id")
-    private Integer pid;
+    @ApiModelProperty(value = "//父id")
+    private Integer parentId;
 
-    @ApiModelProperty(value = "描述")
-    private String description;
+    @ApiModelProperty("//是否匿名访问")
+    private Integer isAnonymous;
 
-    @ApiModelProperty(value = "排序")
-    private String sort;
+    @ApiModelProperty(value = "//创造时间")
+    @TableField(fill = FieldFill.INSERT)
+    private Date createTime;
+
+    @ApiModelProperty(value = "//更新时间")
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private Date updateTime;
 
 }

@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import io.swagger.annotations.ApiModel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
@@ -17,6 +18,7 @@ import java.io.Serializable;
 @ApiModel("角色-菜单表")
 @TableName("tb_role_menu")
 @Accessors(chain = true)
+@Builder
 public class RoleMenu implements Serializable {
     private static final long serialVersionUID = 1L;
 

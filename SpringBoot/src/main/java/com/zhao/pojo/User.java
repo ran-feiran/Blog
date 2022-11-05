@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.*;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
@@ -20,6 +21,7 @@ import java.util.Set;
 @TableName("tb_user")
 @ApiModel("用户表")
 @Accessors(chain = true)
+@Builder
 public class User implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -43,6 +45,12 @@ public class User implements Serializable {
 
     private String email;
 
+    private String ipAddress;
+
+    private String ipSource;
+
+    private Date lastLoginTime;
+
     /**
      * 点赞文章集合
      */
@@ -62,9 +70,12 @@ public class User implements Serializable {
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
 
-    @TableLogic(value = "0",delval = "1")
-    private boolean isDelete;
+    @TableLogic(value = "0", delval = "1")
+    private Integer isDelete;
 
     @ApiModelProperty("禁言")
-    private boolean isSilence;
+    private Integer isSilence;
+
+    @ApiModelProperty("登录类型")
+    private Integer loginType;
 }

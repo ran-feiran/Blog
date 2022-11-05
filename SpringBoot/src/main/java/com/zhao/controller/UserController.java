@@ -1,146 +1,122 @@
 package com.zhao.controller;
 
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.zhao.pojo.User;
-import com.zhao.result.Result;
-import com.zhao.result.ResultInfo;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.zhao.annotations.AccessLimit;
+import com.zhao.annotations.OptLog;
 import com.zhao.api.UserService;
+import com.zhao.dto.PageDTO;
 import com.zhao.dto.UserDTO;
-import com.zhao.dto.UserSignalDTO;
-import com.zhao.exception.div.ServiceException;
-import com.zhao.vo.UserInfoVO;
-import com.zhao.vo.UserQueryVO;
-import com.zhao.vo.UserRegisterVO;
+import com.zhao.pojo.User;
+import com.zhao.result.ResultStandby;
+import com.zhao.vo.*;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import javax.mail.MessagingException;
+import javax.validation.Valid;
 
+import static com.zhao.constant.OptTypeConst.UPDATE;
+import static com.zhao.enums.StatusCodeEnum.SUCCESS;
+import static com.zhao.result.ResultStandby.success;
+
+/**
+ * 用户控制器
+ *
+ * @author ran-feiran
+ * @date 2022/09/27
+ */
 @RestController
 @RequestMapping("/user")
+@Api(tags = "用户模块")
 public class UserController {
 
     @Autowired
     private UserService userService;
 
+    @ApiOperation(value = "QQ登录")
+    @PostMapping("/oauth/qq")
+    public ResultStandby<User> oauthLoginQQ(@Valid @RequestBody QQLoginVO qqLoginVO) throws JsonProcessingException {
+        return success(userService.qqLogin(qqLoginVO), "登录成功");
+    }
+
+    @ApiOperation(value = "绑定邮箱")
+    @AccessLimit(seconds = 60 * 15, maxCount = 1, desc = "请求过于频繁，请稍候再试")
+    @PostMapping("/saveEmail")
+    public ResultStandby<?> saveEmail(@RequestBody UserRegisterVO userRegisterVO) {
+        userService.saveEmail(userRegisterVO);
+        return success(null, "绑定成功");
+    }
+
+    @ApiOperation(value = "更新密码")
+    @AccessLimit(seconds = 60 * 15, maxCount = 1, desc = "请求过于频繁，请稍候再试")
     @PostMapping("/forgetPassword")
-    public Result forgetPassword(@RequestBody UserRegisterVO userRegisterVO) {
+    public ResultStandby<?> forgetPassword(@RequestBody UserRegisterVO userRegisterVO) {
         userService.forgetPassword(userRegisterVO);
-        return Result.success(null,"修改成功，请登录");
+        return success(null,"修改成功，请登录");
     }
 
+    @ApiOperation(value = "用户注册")
+    @AccessLimit(seconds = 60 * 60, maxCount = 1, desc = "请求过于频繁，请稍候再试")
     @PostMapping("/registerUser")
-    public Result registerUser(@RequestBody UserRegisterVO userRegisterVO) {
+    public ResultStandby<?> registerUser(@RequestBody UserRegisterVO userRegisterVO) {
         userService.registerUser(userRegisterVO);
-        return Result.success(null, "注册成功，请登录");
+        return success(null, "注册成功，请登录");
     }
 
+    @ApiOperation(value = "发送验证码")
+    @AccessLimit(seconds = 60, maxCount = 1, desc = "请求过于频繁，请稍候再试")
     @GetMapping("/sendEmailCode")
-    public Result sendEmailCode(@RequestParam("email") String email) {
+    public ResultStandby<?> sendEmailCode(@RequestParam("email") String email) throws MessagingException {
         userService.sendCode(email);
-        return Result.success(null,"验证码发送成功,请注意查收");
+        return success(null,"验证码发送成功,请注意查收");
     }
 
+    @ApiOperation(value = "更新用户角色")
+    @PutMapping("/updateUserRole")
+    public ResultStandby<?> updateUserRole(@Valid @RequestBody UserRoleVO userRoleVO) {
+        userService.updateUserRole(userRoleVO);
+        return success(null, SUCCESS.getDesc());
+    }
 
+    @ApiOperation(value = "获取用户列表(后台)")
     @GetMapping("/getUserList")
-    public Result getUserList(UserQueryVO userQueryVO) {
-        userQueryVO.setStartIndex((userQueryVO.getStartIndex()-1) * userQueryVO.getPageSize());
-        System.out.println(userQueryVO.getStartIndex());
-        List<UserDTO> userList = userService.getUserList(userQueryVO);
-        long total = userService.count();
-        if (userList == null) {
-            throw new ServiceException(ResultInfo.CODE_600,"没有用户存在");
-        }
-        Map<String, Object> map = new HashMap<>();
-        map.put("userList", userList);
-        map.put("total", total);
-        return Result.success(map, "加载用户列表完成");
+    public ResultStandby<PageDTO<UserDTO>> getUserList(ConditionVO conditionVO) {
+        return success(userService.getUserList(conditionVO), SUCCESS.getDesc());
     }
 
-
-    @GetMapping("/getUserListSignal")
-    public Result getUserListSignal(@RequestParam("current") Integer current,
-                                    @RequestParam("size") Integer size,
-                                    @RequestParam("nickname") String nickname) {
-        current = (current - 1) * size;
-        List<UserSignalDTO> userList = userService.getUserRoleList(current, size, nickname);
-        long total = userService.count();
-        if (userList == null) {
-            throw new ServiceException(ResultInfo.CODE_600,"没有用户存在");
-        }
-        Map<String, Object> map = new HashMap<>();
-        map.put("userList", userList);
-        map.put("total", total);
-        return Result.success(map, "成功");
-    }
-
-    @PutMapping("/updateUserById")
-    public Result updateUserById(@RequestBody UserDTO userDTO) {
-        int i = userService.updateUserById(userDTO);
-        if (i <= 0){
-            throw new ServiceException(ResultInfo.CODE_600,"修改用户失败");
-        }
-        return Result.success(null,"修改用户成功");
-    }
-
-    @PostMapping("/updateUserRole")
-    public Result updateUserRole(@RequestBody UserSignalDTO userSignalDTO) {
-        int i = userService.updateUserRole(userSignalDTO);
-        if (i <= 0) {
-            throw new ServiceException(ResultInfo.CODE_600,"修改角色失败");
-        }
-        return Result.success(null,"修改成功");
-    }
-
-    @PostMapping("/addUser")
-    public Result addUser(@RequestBody UserDTO userDTO) {
-        String password = new BCryptPasswordEncoder().encode(userDTO.getPassword());
-        userDTO.setPassword(password);
-        int i = userService.addUser(userDTO);
-        if (i <= 0){
-            throw new ServiceException(ResultInfo.CODE_600,"添加用户失败");
-        }
-        return Result.success(null,"添加用户成功");
-    }
-
+    @ApiOperation(value = "更新用户禁言状态")
+    @OptLog(optType = UPDATE)
     @PutMapping("/updateSilenceById")
-    public Result updateSilenceById(@RequestParam("flag") boolean isSilence,
-                                    @RequestParam("id") Integer userId) {
-        int i = userService.updateSilenceById(isSilence, userId);
-        if (i <= 0){
-            throw new ServiceException(ResultInfo.CODE_600,"状态出错");
-        }
-        return Result.success();
+    public ResultStandby<?> updateSilenceById(@Valid @RequestBody UserSilenceVO userSilenceVO) {
+        userService.updateSilenceById(userSilenceVO);
+        return success(null, SUCCESS.getDesc());
     }
 
-    @DeleteMapping("/logicDeleteUser")
-    public Result logicDeleteUser(@RequestParam("id") Integer userId) {
-        boolean b = userService.removeById(userId);
-        if (!b) {
-            throw new ServiceException(ResultInfo.CODE_600,"状态出错");
-        }
-        return Result.success(null,"删除用户成功");
-    }
-
+    @ApiOperation(value = "更新用户信息")
+    @AccessLimit(seconds = 60, maxCount = 1, desc = "请求过于频繁，请稍候再试")
     @PutMapping("/info")
-    public Result updateUserInfo(@RequestBody UserInfoVO userInfoVO) {
-        User user = new User();
-        user.
-                setWebSite(userInfoVO.getWebSite()).
-                setNickname(userInfoVO.getNickname()).
-                setIntro(userInfoVO.getIntro()).
-                setEmail(userInfoVO.getEmail());
-        QueryWrapper<User> wrapper = new QueryWrapper<>();
-        wrapper.eq("user_id",userInfoVO.getUserId());
-        try {
-            userService.update(user,wrapper);
-        } catch (Exception e) {
-            throw new ServiceException(ResultInfo.CODE_600,"修改失败");
-        }
-        return Result.success();
+    public ResultStandby<?> updateUserInfo(@RequestBody UserInfoVO userInfoVO) {
+        userService.updateUserInfo(userInfoVO);
+        return success(null, SUCCESS.getDesc());
     }
+
+    @ApiOperation(value = "更新密码(后台)")
+    @AccessLimit(seconds = 60 * 15, maxCount = 1, desc = "请求过于频繁，请稍候再试")
+    @PutMapping("/password")
+    public ResultStandby<?> updatePassword(@Valid @RequestBody PasswordVO passwordVO) {
+        userService.updatePassword(passwordVO);
+        return success(null, SUCCESS.getDesc());
+    }
+
+    @ApiOperation(value = "上传头像")
+    @AccessLimit(seconds = 60 * 15, maxCount = 1, desc = "请求过于频繁，请稍候再试")
+    @PostMapping("/avatar")
+    public ResultStandby<String> uploadAvatar(MultipartFile file) {
+        return success(userService.uploadAvatar(file), SUCCESS.getDesc());
+    }
+
 }

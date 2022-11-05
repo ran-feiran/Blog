@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- banner -->
-    <div class="category-banner banner">
+    <div class="banner" :style="cover">
       <h1 class="banner-title">分类</h1>
     </div>
     <!-- 分类列表 -->
@@ -38,23 +38,26 @@ export default {
     listCategories() {
       this.axios.get("/api/category/listCategories").then((res) => {
         const cons = res.data;
-        console.log(cons)
-        this.categoryList = cons.data.categoryList;
+        this.categoryList = cons.data.recordList;
         this.count = cons.data.count;
       });
     }
   },
   computed:{
-
+    cover() {
+      var cover = "";
+      this.$store.state.blogInfo.pageList.forEach(item => {
+        if (item.pageLabel == "category") {
+          cover = item.pageCover;
+        }
+      });
+      return "background: url(" + cover + ") center center / cover no-repeat";
+    }
   }
 };
 </script>
 
 <style scoped>
-.category-banner {
-  background: url("../../assets/img/4.jpg") center
-    center / cover no-repeat;
-}
 .category-title {
   text-align: center;
   font-size: 36px;

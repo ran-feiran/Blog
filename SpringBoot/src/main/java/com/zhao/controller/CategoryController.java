@@ -1,151 +1,87 @@
 package com.zhao.controller;
 
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.mysql.jdbc.StringUtils;
-import com.zhao.api.ArticleService;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.zhao.annotations.OptLog;
+import com.zhao.api.CategoryService;
 import com.zhao.dto.ArticleBlogDTO;
 import com.zhao.dto.CateGoryDTO;
-import com.zhao.pojo.Tag;
-import com.zhao.result.Result;
-import com.zhao.result.ResultInfo;
-import com.zhao.api.CategoryService;
-import com.zhao.exception.div.ServiceException;
+import com.zhao.dto.PageDTO;
+import com.zhao.dto.PageListDTO;
 import com.zhao.pojo.Category;
+import com.zhao.result.ResultStandby;
+import com.zhao.vo.ConditionVO;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+import static com.zhao.constant.OptTypeConst.REMOVE;
+import static com.zhao.constant.OptTypeConst.SAVE_OR_UPDATE;
+import static com.zhao.enums.StatusCodeEnum.SUCCESS;
+import static com.zhao.result.ResultStandby.success;
+
+
+/**
+ * 分类控制器
+ *
+ * @author ran-feiran
+ * @date 2022/09/27
+ */
 @RestController
 @RequestMapping("/category")
+@Api(tags = "分类模块")
 public class CategoryController {
 
     @Autowired
     private CategoryService categoryService;
 
+    @ApiOperation(value = "分类搜索")
+    @GetMapping("/search")
+    public ResultStandby<List<Category>> searchCategories(@RequestParam("keywords") String keywords) {
+        return success(categoryService.searchCategories(keywords), SUCCESS.getDesc());
+    }
 
-    /**
-     * 前台查询分类
-     * @return
-     */
+    @ApiOperation(value = "获取分类列表")
     @GetMapping("/listCategories")
-    public Result listCategories() {
-        List<CateGoryDTO> cateGoryDTOS = categoryService.listCategories();
-        long count = categoryService.count();
-        Map<String, Object> map = new HashMap<>();
-        map.put("categoryList", cateGoryDTOS);
-        map.put("count",count);
-        return Result.success(map,"");
+    public ResultStandby<PageDTO<CateGoryDTO>> listCategories() {
+        return success(new PageDTO<>(categoryService.listCategories(),categoryService.count()),SUCCESS.getDesc());
     }
 
-    /**
-     * 查询分类列表
-     * @return
-     */
+    @ApiOperation(value = "获取分类数据(后台)")
     @GetMapping("/getCategoryList")
-    public Result getTagList() {
-        List<Category> categoryList = categoryService.list();
-        if (categoryList != null) {
-            Map<String, Object> map = new HashMap<>();
-            map.put("categoryList",categoryList);
-            return Result.success(map,"获取分类成功");
-        }
-        throw new ServiceException(ResultInfo.CODE_600,"获取分类失败");
+    public ResultStandby<List<Category>> getCategoryList() {
+        return success(categoryService.list(),SUCCESS.getDesc());
     }
 
-    /**
-     * 删除分类通过id
-     * @param categoryId
-     * @return
-     */
-    @DeleteMapping("/deleteCategory")
-    public Result deleteCategory(@RequestParam("categoryId") Integer categoryId) {
-        try {
-            categoryService.removeById(categoryId);
-        } catch (Exception e) {
-            throw new ServiceException(ResultInfo.CODE_600,"删除分类失败");
-        }
-        return Result.success();
+    @ApiOperation(value = "物理删除分类")
+    @OptLog(optType = REMOVE)
+    @DeleteMapping("/del/batch")
+    public ResultStandby<?> delBatch(@RequestBody List<Integer> ids) {
+        categoryService.removeBatchByIds(ids);
+        return success(null,SUCCESS.getDesc());
     }
 
-    /**
-     * 批量删除分类
-     * @param ids
-     * @return
-     */
-    @PostMapping("/del/batch")
-    public Result delBatch(@RequestBody List<Integer> ids) {
-        if (ids.size() <= 0) {
-            throw new ServiceException(ResultInfo.CODE_600,"批量删除分类失败");
-        }
-        try {
-            categoryService.removeBatchByIds(ids);
-        } catch (Exception e) {
-            throw new ServiceException(ResultInfo.CODE_600,"批量删除分类失败");
-        }
-        return Result.success();
-    }
-
-    /**
-     * 增加或更新分类
-     * @param category
-     * @return
-     */
+    @ApiOperation(value = "新增或更新分类")
+    @OptLog(optType = SAVE_OR_UPDATE)
     @PostMapping("/addOrEditCategory")
-    public Result addOrEditCategory(@RequestBody Category category) {
-        try {
-            categoryService.saveOrUpdate(category);
-        } catch (Exception e) {
-            throw new ServiceException(ResultInfo.CODE_600,"操作分类失败");
-        }
-        return Result.success();
+    public ResultStandby<?> addOrEditCategory(@RequestBody Category category) {
+        categoryService.saveOrUpdate(category);
+        return success(null, SUCCESS.getDesc());
     }
 
-
-    /**
-     * 分页查询分类列表
-     * @param pageNum
-     * @param pageSize
-     * @param categoryName
-     * @return
-     */
+    @ApiOperation(value = "获取分类列表(后台)")
     @GetMapping("/listCategory")
-    public Result listCategory(
-            @RequestParam(value = "pageNum",defaultValue = "1") Integer pageNum,
-            @RequestParam(value = "pageSize",defaultValue = "5") Integer pageSize,
-            @RequestParam(value = "categoryName",defaultValue = "") String categoryName) {
-        Page<Category> page = new Page<>(pageNum,pageSize);
-        QueryWrapper<Category> wrapper = null;
-        if (!StringUtils.isNullOrEmpty(categoryName)) {
-            wrapper = new QueryWrapper<>();
-            wrapper.like("category_name",categoryName);
-        }
-        Page<Category> categoryList = null;
-        try {
-            categoryList = categoryService.page(page, wrapper);
-        } catch (Exception e) {
-            throw new ServiceException(ResultInfo.CODE_600,"获取分类失败");
-        }
-        Map<String, Object> map = new HashMap<>();
-        map.put("categoryList",categoryList);
-        return Result.success(map,"success");
+    public ResultStandby<PageDTO<CateGoryDTO>> listCategory(ConditionVO conditionVO) {
+        return success(categoryService.queryPageCategories(conditionVO),SUCCESS.getDesc());
     }
 
-    @GetMapping("/{categoryId}")
-    public Result getCategoryById(@PathVariable("categoryId") Integer categoryId,
-                                  @RequestParam("current") Integer current) {
-        QueryWrapper<Category> wrapper = new QueryWrapper<>();
-        wrapper.select("category_name").eq("category_id",categoryId);
-        Category one = categoryService.getOne(wrapper);
-        current = current - 1;
-        List<ArticleBlogDTO> articleBlogDTOS = categoryService.listArticles(categoryId,current);
-        Map<String, Object> map = new HashMap<>();
-        map.put("articleList", articleBlogDTOS);
-        map.put("name", one.getCategoryName());
-        return Result.success(map,"");
+    @ApiOperation(value = "通过分类id获取对应文章")
+    @GetMapping("/query/{categoryId}")
+    public ResultStandby<PageListDTO<ArticleBlogDTO>> getCategoryById(@PathVariable("categoryId") Integer categoryId, @RequestParam("current") Integer current) {
+        return success(new PageListDTO<>(categoryService.listArticles(categoryId, current - 1), categoryService
+                .getOne(new LambdaQueryWrapper<Category>().eq(Category::getCategoryId, categoryId)).getCategoryName()), SUCCESS.getDesc());
     }
 }

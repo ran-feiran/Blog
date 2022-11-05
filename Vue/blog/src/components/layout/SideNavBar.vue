@@ -10,7 +10,7 @@
     <!-- 博主介绍 -->
     <div class="blogger-info">
       <v-avatar size="110" style="margin-bottom:0.5rem">
-        <img :src="this.$store.state.blogInfo.avatar" />
+        <img :src="this.$store.state.blogInfo.websiteConfig.websiteAvatar" />
       </v-avatar>
     </div>
     <!-- 博客信息 -->
@@ -45,50 +45,70 @@
     <div class="menu-container">
       <div class="menus-item">
         <router-link to="/">
-          <i class="iconfont iconzhuye" /> 首页
+          <svg class="icon" aria-hidden="true" style="margin-right: 27px">
+            <use xlink:href="#icon-home"></use>
+          </svg> 首页
         </router-link>
       </div>
       <div class="menus-item">
         <router-link to="/archives">
-          <i class="iconfont iconguidang" /> 归档
+          <svg class="icon" aria-hidden="true" style="margin-right: 27px">
+            <use xlink:href="#icon-guidang"></use>
+          </svg> 归档
         </router-link>
       </div>
       <div class="menus-item">
         <router-link to="/categories">
-          <i class="iconfont iconfenlei" /> 分类
+          <svg class="icon" aria-hidden="true" style="margin-right: 27px">
+            <use xlink:href="#icon-fenlei"></use>
+          </svg> 分类
         </router-link>
       </div>
       <div class="menus-item">
         <router-link to="/tags">
-          <i class="iconfont iconbiaoqian" /> 标签
+          <svg class="icon" aria-hidden="true" style="margin-right: 27px">
+            <use xlink:href="#icon-biaoqian"></use>
+          </svg> 标签
         </router-link>
       </div>
       <div class="menus-item">
         <router-link to="/links">
-          <i class="iconfont iconlianjie" /> 友链
+          <svg class="icon" aria-hidden="true" style="margin-right: 27px">
+            <use xlink:href="#icon-lianjie"></use>
+          </svg> 友链
         </router-link>
       </div>
       <div class="menus-item">
         <router-link to="/about">
-          <i class="iconfont iconzhifeiji" /> 关于
+          <svg class="icon" aria-hidden="true" style="margin-right: 27px">
+            <use xlink:href="#icon-zhifeiji"></use>
+          </svg> 关于
         </router-link>
       </div>
       <div class="menus-item">
         <router-link to="/message">
-          <i class="iconfont iconpinglunzu" /> 留言
+          <svg class="icon" aria-hidden="true" style="margin-right: 27px">
+            <use xlink:href="#icon-icon_pinglun"></use>
+          </svg> 留言
         </router-link>
       </div>
       <div class="menus-item" v-if="!this.$store.state.avatar">
-        <a @click="openLogin"><i class="iconfont icondenglu" /> 登录 </a>
+        <a @click="openLogin"><svg class="icon" aria-hidden="true" style="margin-right: 27px">
+          <use xlink:href="#icon-shouye_gerenzhongxinliang"></use>
+        </svg> 登录 </a>
       </div>
       <div v-else>
         <div class="menus-item">
           <router-link to="/user">
-            <i class="iconfont icongerenzhongxin" /> 个人中心
+            <svg class="icon" aria-hidden="true" style="margin-right: 27px">
+              <use xlink:href="#icon-shouye_gerenzhongxinliang"></use>
+            </svg> 个人中心
           </router-link>
         </div>
         <div class="menus-item">
-          <a @click="logout"><i class="iconfont icontuichu" /> 退出</a>
+          <a @click="logout"><svg class="icon" aria-hidden="true" style="margin-right: 27px" >
+            <use xlink:href="#icon-tuichu"></use>
+          </svg> 退出</a>
         </div>
       </div>
     </div>

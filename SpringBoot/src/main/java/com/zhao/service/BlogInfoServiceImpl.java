@@ -1,61 +1,73 @@
 package com.zhao.service;
 
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.zhao.api.BlogInfoService;
+import com.zhao.api.PageService;
 import com.zhao.api.RedisService;
-import com.zhao.constant.RedisPrefixConst;
+import com.zhao.api.WebsiteConfigService;
+import com.zhao.dto.ArticleRecommendDTO;
 import com.zhao.dto.BlogHomeInfoDTO;
 import com.zhao.mapper.ArticleMapper;
 import com.zhao.mapper.CategoryMapper;
 import com.zhao.mapper.TagMapper;
-import com.zhao.mapper.UserMapper;
-import com.zhao.pojo.User;
+import com.zhao.pojo.Article;
+import com.zhao.vo.PageVO;
+import com.zhao.vo.WebsiteConfigVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+
+import static com.zhao.constant.RedisPrefixConst.BLOG_VIEWS_COUNT;
+import static com.zhao.constant.RedisPrefixConst.UNIQUE_VISITOR;
 
 @Service
 public class BlogInfoServiceImpl implements BlogInfoService {
 
     @Autowired
-    private UserMapper userMapper;
-
-    @Autowired
     private ArticleMapper articleMapper;
-
     @Autowired
     private CategoryMapper categoryMapper;
-
     @Autowired
     private TagMapper tagMapper;
-
     @Autowired
     private RedisService redisService;
+    @Autowired
+    private PageService pageService;
+    @Autowired
+    private WebsiteConfigService websiteConfigService;
 
     @Override
-    public BlogHomeInfoDTO getBlogInfo() {
-        //昵称头像简介 公告 文章数量  分类数量 标签数量  公告 访问量
-        //公告先写死 访问量后面在弄
-        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.select("nickname","avatar","intro").eq("username", "zhaoran");
-        User user = userMapper.selectOne(queryWrapper);
+    public BlogHomeInfoDTO getBlogInfo() throws ExecutionException, InterruptedException {
+        // 获取网站背景信息
+        List<PageVO> pageList = pageService.getPageList();
+        // 获取网站配置信息
+        CompletableFuture<WebsiteConfigVO> async = CompletableFuture.supplyAsync(() -> websiteConfigService.getWebsiteConfig());
         //获取文章数量
-        long articleCount= articleMapper.selectCount(null);
+        Long articleCount= articleMapper.selectCount(new LambdaQueryWrapper<Article>().eq(Article::getStatus, 1));
         //分类数量
-        long categoryCount = categoryMapper.selectCount(null);
+        Long categoryCount = categoryMapper.selectCount(null);
         //标签数量
-        long tagCount = tagMapper.selectCount(null);
-        //公告
-        String notice="点个赞在走吧";
+        Long tagCount = tagMapper.selectCount(null);
         // 访问量
-        redisService.incr(RedisPrefixConst.BLOG_VIEWS_COUNT,1L);
-        Integer viewsCount =(Integer) redisService.get(RedisPrefixConst.BLOG_VIEWS_COUNT);
-        BlogHomeInfoDTO blogHomeInfoDTO = new BlogHomeInfoDTO(user.getNickname(), user.getAvatar(), user.getIntro(),
+        Integer viewsCount =(Integer) redisService.get(BLOG_VIEWS_COUNT);
+        // 获取今日访客数
+        Long uniqueVisitor = redisService.sSize(UNIQUE_VISITOR);
+        return new BlogHomeInfoDTO(
                 articleCount,
                 categoryCount,
                 tagCount,
-                notice,
-                viewsCount);
-        return blogHomeInfoDTO;
+                uniqueVisitor,
+                viewsCount,
+                async.get(),
+                pageList);
+    }
+
+    @Override
+    public List<ArticleRecommendDTO> getNewArticleList() throws ExecutionException, InterruptedException {
+        return CompletableFuture.supplyAsync(() -> articleMapper.queryNewArticleList()).get();
     }
 }

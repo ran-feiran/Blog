@@ -1,8 +1,7 @@
 <template>
   <div>
     <!-- banner -->
-    <div class="message-banner">
-
+    <div class="message-banner" :style="cover">
       <!-- 弹幕输入框 -->
       <div class="message-container">
         <h1 class="message-title">留言板</h1>
@@ -10,10 +9,12 @@
           <input
             v-model="messageContent"
             @click="show = true"
+            @keyup.enter="addToList"
             placeholder="说点什么吧"
           />
           <button
             class="ml-3 animated bounceInLeft"
+            style="color: #12b7f5;font-weight: bolder;"
             @click="addToList"
             v-show="show"
           >
@@ -21,7 +22,6 @@
           </button>
         </div>
       </div>
-
       <!-- 弹幕列表 -->
       <div class="barrage-container">
         <vue-baberrage :barrageList="barrageList" :loop="true">
@@ -62,36 +62,57 @@ export default {
         this.$toast({ type: "error", message: "留言不能为空" });
         return false;
       }
-
+      if (this.messageContent.trim().length > 30) {
+        this.$toast({ type: "error", message: "留言保持在30词之内" });
+        return false;
+      }
       const userAvatar = this.$store.state.avatar
           ? this.$store.state.avatar
-          : "https://gravatar.loli.net/avatar/d41d8cd98f00b204e9800998ecf8427e?d=mp&v=1.4.14";
+          : this.$store.state.blogInfo.websiteConfig.touristAvatar;
       const userNickname = this.$store.state.nickname
           ? this.$store.state.nickname
           : "游客";
-
       let message = {
         avatar: userAvatar,
         nickname: userNickname,
         messageContent: this.messageContent,
         time: Math.floor(Math.random() * 10 + 3)
       };
-      this.barrageList.push(message);
       this.messageContent = "";
-
-      this.axios.post("/api/message/messages", message);
+      this.show = false;
+      this.axios.post("/api/message/messages", message).then(({data}) => {
+        if (data.flag) {
+          this.barrageList.push(message);
+          this.$toast({ type: "success", message: "留言成功" });
+        } else {
+          this.$toast({ type: "error", message: data.message });
+        }
+      })
     },
-
     listMessage() {
-      this.axios.get("/api/message/getMessageList").then((res) => {
-        const cons = res.data;
-        if (cons.flag) {
-          this.barrageList = cons.data.messageList;
+      this.axios.get("/api/message/getMessageList",{
+        params: {
+          current: 1,
+          size: 9999,
+          isReview: 1,
+        }
+      }).then(({ data }) => {
+        if (data.flag) {
+          this.barrageList = data.data.recordList;
         }
       });
     },
-
-
+  },
+  computed:{
+    cover() {
+      var cover = "";
+      this.$store.state.blogInfo.pageList.forEach(item => {
+        if (item.pageLabel == "message") {
+          cover = item.pageCover;
+        }
+      });
+      return "background: url(" + cover + ") center center / cover no-repeat";
+    }
   }
 };
 </script>
@@ -103,8 +124,6 @@ export default {
   left: 0;
   right: 0;
   height: 100vh;
-  background: url("../../assets/img/6.jpg") center center /
-    cover no-repeat;
   animation: header-effect 1s;
 }
 .message-title {

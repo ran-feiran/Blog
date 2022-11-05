@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zhao.mapper.PageMapper">
+
+    <select id="listPages" resultType="com.zhao.dto.PageBackDTO">
+        select
+            p.id,
+            p.page_name,
+            p.page_cover,
+            p.page_label
+        from myblog.tb_page p
+        limit 20
+    </select>
+
+    <select id="getPageList" resultType="com.zhao.vo.PageVO">
+        select
+            p.id,
+            p.page_name,
+            p.page_cover,
+            p.page_label
+        from myblog.tb_page p
+        limit 20
+    </select>
+</mapper>

@@ -1,7 +1,7 @@
 package com.zhao.authority;
 
-import com.zhao.api.ApiService;
 import com.zhao.dto.ApiPermissionDTO;
+import com.zhao.mapper.ApiMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.ConfigAttribute;
@@ -14,19 +14,29 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+
+import static com.zhao.constant.CommonConst.*;
+import static com.zhao.enums.RoleEnum.GUEST;
 
 
 /**
- * 设置权限，为路径和方法
+ * 过滤器调用安全元数据来源
+ *
+ * @author ran-feiran
+ * @date 2022/10/19
  */
 @Component
 @Slf4j
-public class MyFilterInvocationSecurityMetadatasource implements FilterInvocationSecurityMetadataSource {
+public class MyFilterInvocationSecurityMetadataSource implements FilterInvocationSecurityMetadataSource {
 
     @Autowired
-    private ApiService apiService;
+    private ApiMapper apiMapper;
 
+    /**
+     * 所有资源权限
+     */
     private static List<ApiPermissionDTO> allApiPermission;
 
     /**
@@ -34,7 +44,7 @@ public class MyFilterInvocationSecurityMetadatasource implements FilterInvocatio
      */
     @PostConstruct
     private void loadDataSource() {
-        allApiPermission = apiService.getAllApiPermission();
+        allApiPermission = apiMapper.getAllApiPermission();
     }
 
     /**
@@ -56,25 +66,24 @@ public class MyFilterInvocationSecurityMetadatasource implements FilterInvocatio
         String url = request.getRequestURI();
         // 再匹配方法
         String method = request.getMethod();
+        // 创建路径匹配器
         AntPathMatcher matcher = new AntPathMatcher();
-        TreeSet<String> objects = new TreeSet<>();
+        // 获取接口角色信息，若为匿名接口则放行，若无对应角色则禁止
+        log.info("====================SpringSecurity执行前====================路径：{},方法：{}",url, method);
         for (ApiPermissionDTO apiPermissionDTO : allApiPermission) {
             if (matcher.match(apiPermissionDTO.getUrl(),url) &&
-                    (apiPermissionDTO.getRequestMethod().equals(method) ||
-                            apiPermissionDTO.getRequestMethod().equals("ALL"))) {
+                    apiPermissionDTO.getRequestMethod().equals(method)) {
                 List<String> roleList = apiPermissionDTO.getRoleList();
-                objects.addAll(roleList);
-//                System.out.println(Arrays.toString(objects.toArray(new String[]{})) +"11111");
+                if (apiPermissionDTO.getIsAnonymous() == TRUE) {
+                    roleList.add(GUEST.getLabel());
+                }
+                if (CollectionUtils.isEmpty(roleList)) {
+                    return SecurityConfig.createList(DISABLE);
+                }
+                return SecurityConfig.createList(roleList.toArray(new String[]{}));
             }
         }
-        if (objects.size() <= 0) {
-            return null;
-        }
-        if (url.startsWith("/role/saveRolePermissionList/") && method.equals("POST")) {
-            this.clearDataSource();
-        }
-        return SecurityConfig.createList(objects.toArray(new String[]{}));
-//        return SecurityConfig.createList("ADMIN","TEST","USER","GUEST");
+        return SecurityConfig.createList(UNKNOWN);
     }
 
     @Override
@@ -84,5 +93,6 @@ public class MyFilterInvocationSecurityMetadatasource implements FilterInvocatio
 
     @Override
     public boolean supports(Class<?> clazz) {
-        return FilterInvocation.class.isAssignableFrom(clazz);    }
+        return FilterInvocation.class.isAssignableFrom(clazz);
+    }
 }

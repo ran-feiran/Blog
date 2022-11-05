@@ -1,22 +1,54 @@
 <template>
   <div>
     <!-- banner -->
-    <div class="home-banner">
+    <div class="home-banner" :style="cover">
       <div class="banner-container">
-
-        <h1 class="blog-title animated zoomIn" style="position:relative;top: -10px">
-        Ran-feiran 的个人博客
+        <h1 class="blog-title animated zoomIn" style="position:relative;top: -10px;">
+          {{ blogInfo.websiteConfig.websiteName }}
         </h1>
-
-        <div class="blog-intro" style="position:relative;top: -5px">
+        <div class="blog-intro" style="position:relative;top: -10px;font-weight: bolder">
           {{ obj.output }} <span class="typed-cursor">|</span>
         </div>
-
+        <!-- 联系方式 -->
+        <div class="blog-contact">
+          <a
+              v-if="isShowSocial('qq')"
+              class="mr-5"
+              target="_blank"
+              :href="
+              'http://wpa.qq.com/msgrd?v=3&uin=' +
+                blogInfo.websiteConfig.qq +
+                '&site=qq&menu=yes'
+            "
+          >
+            <svg class="icon" aria-hidden="true">
+              <use xlink:href="#icon-external_qq"></use>
+            </svg>
+          </a>
+          <a
+              v-if="isShowSocial('github')"
+              target="_blank"
+              :href="blogInfo.websiteConfig.github"
+              class="mr-5"
+          >
+            <svg class="icon" aria-hidden="true">
+              <use xlink:href="#icon-github"></use>
+            </svg>
+          </a>
+          <a
+              v-if="isShowSocial('gitee')"
+              target="_blank"
+              :href="blogInfo.websiteConfig.gitee"
+          >
+            <svg class="icon" aria-hidden="true">
+              <use xlink:href="#icon-gitee"></use>
+            </svg>
+          </a>
+        </div>
       </div>
-
       <!-- 向下滚动 -->
       <div class="scroll-down" @click="scrollDown">
-        <v-icon color="#fff" class="scroll-down-effects" style="font-size: 75px">
+        <v-icon color="#fff" class="scroll-down-effects" style="font-size: 60px">
           mdi-chevron-down
         </v-icon>
       </div>
@@ -51,19 +83,23 @@
             </div>
             <div class="article-info">
               <!-- 是否置顶 -->
-              <span v-if="item.top == 1">
+              <span v-if="item.isTop == 1">
                 <span style="color:#ff7242">
                   <i class="iconfont iconzhiding" /> 置顶
                 </span>
                 <span class="separator">|</span>
               </span>
               <!-- 发表时间 -->
-              <v-icon size="14">mdi-calendar-month-outline</v-icon>
+              <svg class="icon" aria-hidden="true">
+                <use xlink:href="#icon-rili"></use>
+              </svg>
               {{ item.createTime | date }}
               <span class="separator">|</span>
               <!-- 文章分类 -->
               <router-link :to="'/category/' + item.categoryId">
-                <v-icon size="14">mdi-inbox-full</v-icon>
+                <svg class="icon" aria-hidden="true" style="size: 12px">
+                  <use xlink:href="#icon-fenlei"></use>
+                </svg>
                 {{ item.categoryName }}
               </router-link>
               <span class="separator">|</span>
@@ -75,7 +111,9 @@
                 v-for="tag of item.tagList"
                 :key="tag.tagId"
               >
-                <v-icon size="14">mdi-tag-multiple</v-icon>{{ tag.tagName }}
+                <svg class="icon" aria-hidden="true" style="size: 12px">
+                  <use xlink:href="#icon-biaoqian"></use>
+                </svg>{{ tag.tagName }}
               </router-link>
             </div>
             <!-- 文章内容 -->
@@ -99,16 +137,16 @@
             <div class="author-wrapper">
               <!-- 博主头像 -->
               <v-avatar size="110">
-                <img class="author-avatar" :src="blogInfo.avatar"  alt=""/>
+                <img class="author-avatar" :src="blogInfo.websiteConfig.websiteAvatar"  alt=""/>
               </v-avatar>
-              <div style="font-size: 1.375rem">{{ blogInfo.nickname }}</div>
-              <div style="font-size: 0.875rem;">{{ blogInfo.intro }}</div>
+              <div style="font-size: 1.375rem">{{ blogInfo.websiteConfig.websiteAuthor }}</div>
+              <div style="font-size: 0.875rem;">{{ blogInfo.websiteConfig.websiteIntro }}</div>
             </div>
             <!-- 博客信息 -->
             <div class="blog-info-wrapper">
               <div class="blog-info-data">
                 <router-link to="/archives">
-                  <div style="font-size: 0.875rem">文章</div>
+                  <div style="font-size: 0.875rem;font-weight: bolder">文章</div>
                   <div style="font-size: 1.25rem">
                     {{ blogInfo.articleCount }}
                   </div>
@@ -116,7 +154,7 @@
               </div>
               <div class="blog-info-data">
                 <router-link to="/categories">
-                  <div style="font-size: 0.875rem">分类</div>
+                  <div style="font-size: 0.875rem;font-weight: bolder">分类</div>
                   <div style="font-size: 1.25rem">
                     {{ blogInfo.categoryCount }}
                   </div>
@@ -124,7 +162,7 @@
               </div>
               <div class="blog-info-data">
                 <router-link to="/tags">
-                  <div style="font-size: 0.875rem">标签</div>
+                  <div style="font-size: 0.875rem;font-weight: bolder">标签</div>
                   <div style="font-size: 1.25rem">{{ blogInfo.tagCount }}</div>
                 </router-link>
               </div>
@@ -134,49 +172,105 @@
               <v-icon color="#fff" size="18" class="mr-1">mdi-bookmark</v-icon>
               加入书签
             </a>
+            <!-- 社交信息 -->
             <div class="card-info-social">
               <a
-                class="mr-5 iconfont iconqq"
-                target="_blank"
-              />
+                  v-if="isShowSocial('qq')"
+                  class="mr-5"
+                  target="_blank"
+                  :href="
+              'http://wpa.qq.com/msgrd?v=3&uin=' +
+                blogInfo.websiteConfig.qq +
+                '&site=qq&menu=yes'
+            "
+              >
+                <svg class="icon" aria-hidden="true">
+                  <use xlink:href="#icon-QQ"></use>
+                </svg>
+              </a>
               <a
-                target="_blank"
-                class="mr-5 iconfont icongithub"
-              />
+                  v-if="isShowSocial('github')"
+                  target="_blank"
+                  :href="blogInfo.websiteConfig.github"
+                  class="mr-5"
+              >
+                <svg class="icon" aria-hidden="true">
+                  <use xlink:href="#icon-github"></use>
+                </svg>
+              </a>
               <a
-                target="_blank"
-                class="mr-5 iconfont icongitee-fill-round"
-              />
-              <a
-                class=" iconfont iconweibo"
-                target="_blank"
-              />
+                  v-if="isShowSocial('gitee')"
+                  target="_blank"
+                  :href="blogInfo.websiteConfig.gitee"
+              >
+                <svg class="icon" aria-hidden="true">
+                  <use xlink:href="#icon-gitee"></use>
+                </svg>
+              </a>
             </div>
           </v-card>
           <!-- 网站信息 -->
           <v-card class="blog-card animated zoomIn mt-5 big">
             <div class="web-info-title">
-              <v-icon size="18">mdi-bell</v-icon>
-              公告
+              <v-icon size="18" style="margin-bottom: 3px">mdi-bell</v-icon>
+              <span style="font-weight: bolder">公告</span>
             </div>
             <div style="font-size:0.875rem">
-              {{ blogInfo.notice }}
+              {{ blogInfo.websiteConfig.websiteNotice }}
             </div>
           </v-card>
           <!-- 网站信息 -->
           <v-card class="blog-card animated zoomIn mt-5">
             <div class="web-info-title">
-              <v-icon size="18">mdi-chart-line</v-icon>
-              网站资讯
+              <svg class="icon" aria-hidden="true" style="margin-right: 8px">
+                <use xlink:href="#icon-webxWebyingyongtuoguanfuwuqi"></use>
+              </svg>
+              <span style="font-weight: bolder">网站资讯</span>
             </div>
             <div class="web-info">
               <div style="padding:4px 0 0">
-                运行时间:<span class="float-right">{{ time }}</span>
+                <b>运行时间:</b><span class="float-right">
+                <span class="datetime">{{ time }}</span>
+              </span>
               </div>
               <div style="padding:4px 0 0">
-                总访问量:<span class="float-right">
-                  {{ blogInfo.viewsCount }}
+                <b>日访客数:</b><span class="float-right">
+                <span class="uniqueVis">{{ blogInfo.uniqueVisitor }}</span>
                 </span>
+              </div>
+              <div style="padding:4px 0 0;">
+                  <b>总访问量:</b><span class="float-right">
+                <span class="viewCount">{{ blogInfo.viewsCount }}</span>
+                </span>
+              </div>
+
+            </div>
+          </v-card>
+          <!-- 最新文章 -->
+          <v-card class="blog-card animated zoomIn mt-5">
+            <div class="right-title" style="position: relative;top: -5px">
+              <svg class="icon" aria-hidden="true" style="size: 16.8px">
+                <use xlink:href="#icon-icon_A"></use>
+              </svg>
+              <span style="margin-left:10px;font-weight: bolder">最新文章</span>
+            </div>
+            <div class="article-list">
+              <div
+                  class="article-item1"
+                  v-for="item of newestArticleList"
+                  :key="item.articleId"
+              >
+                <router-link :to="'/articles/' + item.articleId" class="content-cover1">
+                  <img :src="item.articleCover" />
+                </router-link>
+                <div class="content1">
+                  <div class="content-title1">
+                    <router-link :to="'/articles/' + item.articleId">
+                      {{ item.articleTitle }}
+                    </router-link>
+                  </div>
+                  <div class="content-time1">{{ item.createTime | date }}</div>
+                </div>
               </div>
             </div>
           </v-card>
@@ -195,8 +289,10 @@ import EasyTyper from "easy-typer-js";
 export default {
   created() {
     this.init();
-    this.getBlogInfo();
     this.timer = setInterval(this.runTime, 1000);
+    this.axios.get("/api/blogInfo/getNewArticleList").then(({data}) => {
+      this.newestArticleList = data.data;
+    })
   },
   data: function() {
     return {
@@ -212,8 +308,8 @@ export default {
         backSpeed: 40,
         sentencePause: true
       },
+      newestArticleList: [], // 最新文章
       articleList: [],
-      blogInfo: {},
       current: 1
     };
   },
@@ -243,16 +339,16 @@ export default {
       })
           .then(( res ) => {
             const cons = res.data;
-            if (cons.data.articleList.length>0) {
+            if (cons.data.length>0) {
               // console.log(cons.data.articleList[0])
-              cons.data.articleList.forEach(item => {
+              cons.data.forEach(item => {
                 item.articleContent = md
                     .render(item.articleContent)
                     .replace(/<\/?[^>]*>/g, "")
                     .replace(/[|]*\n/, "")
-                    .replace(/&npsp;/gi, "");
+                    .replace(/&nbsp;/gi, "");
               });
-              this.articleList.push(...cons.data.articleList);
+              this.articleList.push(...cons.data);
               this.current++;
               $state.loaded();
             } else {
@@ -260,18 +356,6 @@ export default {
             }
           });
     },
-
-    getBlogInfo() {
-      this.axios.get("/api/blogInfo/getBlogInfo").then(res => {
-        const cons = res.data
-        // console.log(cons)
-        if (cons.flag) {
-          this.blogInfo = cons.data.blogInfo
-          this.$store.commit("checkBlogInfo", cons.data.blogInfo);
-        }
-      });
-    },
-
     // 初始化
     scrollDown() {
       window.scrollTo({
@@ -292,11 +376,16 @@ export default {
       str += day.getSeconds() + "秒";
       this.time = str;
     },
-
-
-
   },
   computed: {
+    isShowSocial() {
+      return function(social) {
+        return this.blogInfo.websiteConfig.socialUrlList.indexOf(social) != -1;
+      };
+    },
+    blogInfo() {
+      return this.$store.state.blogInfo;
+    },
     isRight() {
       return function(index) {
         if (index % 2 == 0) {
@@ -304,6 +393,15 @@ export default {
         }
         return "article-cover right-radius";
       };
+    },
+    cover() {
+      var cover = "";
+      this.$store.state.blogInfo.pageList.forEach(item => {
+        if (item.pageLabel == "home") {
+          cover = item.pageCover;
+        }
+      });
+      return "background: url(" + cover + ") center center / cover no-repeat";
     }
   }
 };
@@ -323,17 +421,84 @@ export default {
 </style>
 
 <style scoped>
+.viewCount {
+  color: #ef1255;
+  font-weight: bolder;
+  font-size: 15px;
+  position: relative;
+  top: -7px;
+}
+.datetime {
+  color: #1b62e5;
+  font-weight: bolder;
+  font-size: 15px;
+  position: relative;
+  top: -5px;
+}
+.uniqueVis {
+  color: orangered;
+  font-weight: bolder;
+  font-size: 15px;
+  position: relative;
+  top: -5px;
+}
 .home-banner {
   position: absolute;
   top: -58px;
   left: 0;
   right: 0;
   height: 100vh;
-  background: url("../../assets/img/bg.jpg") center center /
-    cover no-repeat;
   text-align: center;
   color: #fff !important;
   animation: header-effect 1s;
+}
+.article-item1 {
+  display: flex;
+  align-items: center;
+  padding: 6px 0;
+}
+.article-item1:first-child {
+  padding-top: 0;
+}
+.article-item1:last-child {
+  padding-bottom: 0;
+}
+.article-item1:not(:last-child) {
+  border-bottom: 1px dashed #f5f5f5;
+}
+.article-item1 img {
+  width: 100%;
+  height: 100%;
+  transition: all 0.6s;
+  object-fit: cover;
+}
+.article-item1 img:hover {
+  transform: scale(1.1);
+}
+.content1 {
+  flex: 1;
+  padding-left: 10px;
+  word-break: break-all;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+}
+.content-cover1 {
+  width: 58.8px;
+  height: 58.8px;
+  overflow: hidden;
+}
+.content-title1 a {
+  transition: all 0.2s;
+  font-size: 95%;
+}
+.content-title1 a:hover {
+  color: #2ba1d1;
+}
+.content-time1 {
+  color: #858585;
+  font-size: 85%;
+  line-height: 2;
 }
 .banner-container {
   margin-top: 43vh;

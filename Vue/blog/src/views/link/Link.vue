@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- banner -->
-    <div class="link-banner banner">
+    <div class="banner" :style="cover">
       <h1 class="banner-title">友情链接</h1>
     </div>
     <!-- 链接列表 -->
@@ -33,19 +33,23 @@
         <v-icon color="blue">mdi-dots-horizontal-circle</v-icon> 添加友链
       </div>
       <blockquote>
-        <div>名称：Ran-feiran的个人博客</div>
-        <div>简介：秃头小可爱</div>
-        <div>头像：头像链接</div>
-        <div>博客：博客链接</div>
+        <div>名称：{{ blogInfo.websiteConfig.websiteName }}</div>
+        <div>简介：{{ blogInfo.websiteConfig.websiteIntro }}</div>
+        <div>头像：{{ blogInfo.websiteConfig.websiteAvatar }}</div>
+        <div>链接： https://www.ran-feiran.cn</div>
       </blockquote>
       <div class="mt-5 mb-5">
         需要交换友链的可在下方留言💖
       </div>
       <blockquote class="mb-10">
-        友链信息展示需要，你的信息格式要包含：名称、简介、博客、头像
+        友链信息展示需要，你的信息格式要包含：名称、简介、链接、头像
       </blockquote>
       <!-- 评论 -->
-      <Comment :commentList="commentList" :count="count" @reloadComment="reloadComment"></Comment>
+      <Comment
+          :commentList="commentList"
+          :count="count"
+          @reloadComment="reloadComment">
+      </Comment>
     </v-card>
   </div>
 </template>
@@ -77,16 +81,34 @@ export default {
             const cons = res.data;
             this.commentList = cons.data.recordList;
             this.count = cons.data.count;
-            console.log(this.commentList)
+            // console.log(this.commentList)
             // console.log(this.count)
           });
     },
-
     listFriendLink() {
-      this.axios.get("/api/friendLink/listLinks").then((res) => {
+      this.axios.get("/api/friendLink/listLinks", {
+        params:{
+          current: 1,
+          size: 40,
+        }
+      }).then((res) => {
         const cons = res.data;
-        this.friendLinkList = cons.data.linkList;
+        this.friendLinkList = cons.data.recordList;
       });
+    }
+  },
+  computed:{
+    blogInfo() {
+      return this.$store.state.blogInfo;
+    },
+    cover() {
+      var cover = "";
+      this.$store.state.blogInfo.pageList.forEach(item => {
+        if (item.pageLabel == "link") {
+          cover = item.pageCover;
+        }
+      });
+      return "background: url(" + cover + ") center center / cover no-repeat";
     }
   }
 };
@@ -102,10 +124,7 @@ blockquote {
   background-color: #ecf7fe;
   border-radius: 4px;
 }
-.link-banner {
-  background: url("../../assets/img/5.jpg") center center /
-    cover no-repeat;
-}
+
 .link-title {
   color: #344c67;
   font-size: 21px;

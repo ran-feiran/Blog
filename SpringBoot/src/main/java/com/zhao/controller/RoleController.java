@@ -1,109 +1,65 @@
 package com.zhao.controller;
 
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.zhao.result.Result;
-import com.zhao.result.ResultInfo;
-import com.zhao.api.MenuService;
+import com.zhao.annotations.OptLog;
 import com.zhao.api.RoleService;
-import com.zhao.dto.RoleListDto;
-import com.zhao.exception.div.ServiceException;
-import com.zhao.pojo.Menu;
-import com.zhao.pojo.Role;
+import com.zhao.dto.PageDTO;
+import com.zhao.dto.RoleBackDTO;
+import com.zhao.dto.RoleListDTO;
+import com.zhao.result.ResultStandby;
+import com.zhao.vo.ConditionVO;
+import com.zhao.vo.RolePermissionVO;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
+import java.util.List;
 
+import static com.zhao.constant.OptTypeConst.SAVE_OR_UPDATE;
+import static com.zhao.constant.OptTypeConst.UPDATE;
+import static com.zhao.enums.StatusCodeEnum.SUCCESS;
+import static com.zhao.result.ResultStandby.success;
+
+
+/**
+ * 角色控制器
+ *
+ * @author ran-feiran
+ * @date 2022/10/18
+ */
 @RestController
-@RequestMapping("/role")
+@Api(tags = "角色模块")
 public class RoleController {
 
     @Autowired
     private RoleService roleService;
 
-//    @Autowired
-//    private RoleMenuMapper roleMenuMapper;
-
-    @Autowired
-    private MenuService menuService;
-
-    @PostMapping("/saveRoleMenu/{roleId}")
-    public Result saveRoleMenu(@PathVariable("roleId") Integer roleId, @RequestBody List<Integer> menuIds) {
-        try {
-            if (menuIds.size() > 0) {
-                List<Integer> menus = new ArrayList<>();
-                menus.addAll(menuIds);
-
-                for (Integer menuId : menuIds) {
-                    QueryWrapper<Menu> wrapper = new QueryWrapper<>();
-                    wrapper.eq("menu_id", menuId);
-                    Menu menu = menuService.getOne(wrapper);
-                    if (menu.getParentId() != 0 && menu.getParentId() != null && !menuIds.contains(menu.getParentId())) {
-                        menus.add(menu.getParentId());
-                    }
-                }
-
-                roleService.saveRoleMenu(roleId, menus);
-            } else {
-                return Result.error(ResultInfo.CODE_600, "菜单赋权为空,请重新赋权");
-            }
-        } catch (Exception e) {
-            throw new ServiceException(ResultInfo.CODE_600,"修改菜单权限失败");
-        }
-        return Result.success();
+    @ApiOperation(value = "获取角色数据")
+    @GetMapping("/role/getRoleList")
+    public ResultStandby<List<RoleListDTO>> getRoleList() {
+        return success(roleService.queryRole(), SUCCESS.getDesc());
     }
 
-    @GetMapping("/getRoleList")
-    public Result getRoleList(){
-        List<RoleListDto> roleList = roleService.queryRole();
-        if (roleList == null) {
-            throw new ServiceException(ResultInfo.CODE_600,"没有角色存在");
-        }
-        Map<String, Object> map = new HashMap<>();
-        map.put("roleList", roleList);
-        return Result.success(map,"获取角色成功");
+    @ApiOperation(value = "获取角色列表")
+    @GetMapping("/role/listRoles")
+    public ResultStandby<PageDTO<RoleBackDTO>> listRoles(ConditionVO conditionVO){
+        return success(roleService.listRoles(conditionVO), SUCCESS.getDesc());
     }
 
-    @GetMapping("/findRoleList")
-    public Result findRoleList() {
-        List<Role> list = null;
-        try {
-            list = roleService.list();
-        } catch (Exception e) {
-            throw new ServiceException(ResultInfo.CODE_600,"没有角色存在");
-        }
-        Map<String, Object> map = new HashMap<>();
-        map.put("roleList", list);
-        return Result.success(map,"获取角色成功");
+    @ApiOperation(value = "角色删除")
+    @OptLog(optType = UPDATE)
+    @DeleteMapping("/role/del/batch")
+    public ResultStandby<?> deleteRole(@RequestBody List<Integer> ids) {
+        roleService.removeByIds(ids);
+        return success();
     }
 
-    @PostMapping("/saveOrUpdateRole")
-    public Result saveOrUpdateRole(@RequestBody Role role) {
-        boolean b = roleService.saveOrUpdate(role);
-        if (!b) {
-            throw new ServiceException(ResultInfo.CODE_600,"操作失败，请重试");
-        }
-        return Result.success(null, "操作成功");
-    }
-
-    @DeleteMapping("/deleteRole")
-    public Result deleteRole(@RequestParam("id") Integer id) {
-        try {
-            roleService.removeById(id);
-        } catch (Exception e) {
-            throw new ServiceException(ResultInfo.CODE_600,"操作失败，请重试");
-        }
-        return Result.success(null,"删除成功");
-    }
-
-    @GetMapping("/getRoleNameById")
-    public Result getRoleNameById(@RequestParam("roleId") Integer roleId) {
-        QueryWrapper<Role> wrapper = new QueryWrapper<>();
-        wrapper.eq("role_id", roleId);
-        Role role = roleService.getOne(wrapper);
-        Map<String, Object> map = new HashMap<>();
-        map.put("roleName", role.getRoleName());
-        return Result.success(map, "");
+    @ApiOperation(value = "保存或更新角色权限")
+    @OptLog(optType = SAVE_OR_UPDATE)
+    @PostMapping("/role/saveOrUpdateRolePermission")
+    public ResultStandby<?> saveOrUpdateRolePermission(@RequestBody RolePermissionVO rolePermissionVO) {
+        roleService.saveOrUpdateRolePermission(rolePermissionVO);
+        return success();
     }
 }

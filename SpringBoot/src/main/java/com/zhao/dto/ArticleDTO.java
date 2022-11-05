@@ -1,7 +1,5 @@
 package com.zhao.dto;
 
-import io.swagger.annotations.ApiModelProperty;
-import io.swagger.annotations.Tag;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,13 +19,23 @@ public class ArticleDTO implements Serializable {
 
     private String articleTitle;
 
+    private String articleCover;
+
     private String categoryName;
 
-    private List<String> tagName;
+    private List<TagDTO> tagDTOList;
 
-    private boolean isTop;
+    private Integer viewsCount;
+
+    private Integer likeCount;
+
+    private Integer isTop;
 
     private Date createTime;
 
-    private Date updateTime;
+   private Integer type;
+
+   private Integer isDelete;
+
+   private Integer status;
 }

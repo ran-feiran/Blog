@@ -6,22 +6,29 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
-import java.util.HashMap;
 import java.util.Map;
 
+import static com.zhao.enums.StatusCodeEnum.*;
+import static com.zhao.enums.StatusCodeEnum.FAIL;
+
 /**
+ *
  * 定制统一结果返回类
+ *
+ * @author ran-feiran
+ * @date 2022/09/27
  */
 @Data
-@AllArgsConstructor
+@AllArgsConstructor(staticName = "create")
 @NoArgsConstructor
 @Accessors(chain = true)
+@Deprecated
 public class Result {
 
     /**
      * 返回状态 true false
      */
-    private boolean flag;
+    private Boolean flag;
 
     /**
      * 状态码
@@ -31,7 +38,7 @@ public class Result {
     /**
      * 返回数据
      */
-    private Map<String,Object> data = new HashMap<>();
+    private Map<String,Object> data;
 
     /**
      * 返回信息
@@ -39,19 +46,19 @@ public class Result {
     private  String message;
 
     public static Result success() {
-        return new Result(true, ResultInfo.CODE_200, null, "操作成功");
+        return create(true, SUCCESS.getCode(), null, SUCCESS.getDesc());
     }
 
     public static Result success(Map<String,Object> data, String msg) {
-        return new Result(true, ResultInfo.CODE_200, data, msg);
+        return create(true, SUCCESS.getCode(), data, msg);
     }
 
     public static Result error() {
-        return new Result(false, ResultInfo.CODE_500, null, "系统错误");
+        return create(false, FAIL.getCode(), null, FAIL.getDesc());
     }
 
     public static Result error(String code, String msg) {
-        return new Result(false, code, null, msg);
+        return create(false, code, null, msg);
     }
 
 }

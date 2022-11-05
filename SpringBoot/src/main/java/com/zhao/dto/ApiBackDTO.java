@@ -1,7 +1,5 @@
 package com.zhao.dto;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,6 +8,7 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Data
@@ -20,32 +19,25 @@ public class ApiBackDTO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
 
-    @ApiModelProperty(value = "//父id")
-    private Integer apiId;
+    @ApiModelProperty(value = "//资源名")
+    private String resourceName;
 
-    @ApiModelProperty(value = "//api名")
-    private String name;
-
-    @ApiModelProperty(value = "//请求地址")
+    @ApiModelProperty(value = "//资源路径")
     private String url;
 
-    @ApiModelProperty(value = "请求方式")
-    private String method;
+    @ApiModelProperty(value = "//请求方式")
+    private String requestMethod;
 
-    @ApiModelProperty(value = "父id")
-    private Integer pid;
+    @ApiModelProperty(value = "//父id")
+    private Integer parentId;
 
-//    @ApiModelProperty(value = "父名")
-//    private Integer pName;
+    @ApiModelProperty("//是否匿名访问")
+    private Integer isAnonymous;
 
-    @ApiModelProperty(value = "描述")
-    private String description;
-
-    @ApiModelProperty(value = "排序")
-    private String sort;
+    @ApiModelProperty(value = "//创造时间")
+    private Date createTime;
 
     private List<ApiBackDTO> children = new ArrayList<>();
 

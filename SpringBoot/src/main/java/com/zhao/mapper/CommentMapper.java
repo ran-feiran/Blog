@@ -6,6 +6,7 @@ import com.zhao.dto.CommentDTO;
 import com.zhao.dto.ReplyCountDTO;
 import com.zhao.dto.ReplyDTO;
 import com.zhao.pojo.Comment;
+import com.zhao.vo.ConditionVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
@@ -17,9 +18,7 @@ import java.util.List;
 public interface CommentMapper extends BaseMapper<Comment> {
 
 
-    List<CommentBackDTO> getUserReplyList (@Param("pageNum") Integer pageNum,
-                                           @Param("pageSize") Integer pageSize,
-                                           @Param("nickname") String nickname);
+    List<CommentBackDTO> getUserReplyList (@Param("condition") ConditionVO conditionVO);
 
 
     /**
@@ -53,4 +52,13 @@ public interface CommentMapper extends BaseMapper<Comment> {
      */
     List<ReplyDTO> listRepliesByCommentId(@Param("commentId") Integer commentId,
                                           @Param("current") Long current);
+
+    /**
+     * 更新评论评论
+     *
+     * @param idList   id列表
+     * @param isReview 是审查
+     */
+    void updateCommentReview(@Param("ids") List<Integer> idList,
+                             @Param("isReview") Integer isReview);
 }

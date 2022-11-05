@@ -5,20 +5,36 @@
 
     <select id="getUserReplyList" resultType="com.zhao.dto.CommentBackDTO">
         select
-        a.id,
-        a.user_id,
-        b.avatar,
-        b.nickname,
-        a.reply_id,
-        a.article_id,
-        a.create_time,
-        a.comment_content
-        from   myblog.tb_comment a ,myblog.tb_user b
-        where a.is_delete = 0 and a.user_id = b.user_id
-        <if test='nickname != null and nickname != "" '>
-            and b.nickname like concat('%',#{nickname},'%')
-        </if>
-        LIMIT #{pageNum},#{pageSize}
+                a.id,
+                a.user_id,
+                b.avatar,
+                b.nickname,
+                a.reply_id,
+                c.nickname reply_nickname,
+                a.article_id,
+                tna.article_title,
+                a.create_time,
+                a.comment_content,
+                a.is_review,
+                a.type
+        from  myblog.tb_comment a
+        left join myblog.tb_user b on a.user_id = b.user_id
+        left join myblog.tb_user c on a.reply_id = c.user_id
+        left join myblog.tb_new_article tna on a.article_id = tna.article_id
+        <where>
+            a.is_delete = 0
+            <if test="condition.keywords != null and condition.keywords != ''">
+                and b.nickname like concat('%',#{condition.keywords},'%')
+            </if>
+            <if test="condition.isReview != null">
+                and a.is_review = #{condition.isReview}
+            </if>
+            <if test="condition.type != null">
+                and a.type = #{condition.type}
+            </if>
+        </where>
+        order by a.create_time desc
+        LIMIT #{condition.current},#{condition.size}
     </select>
 
     <select id="listComments" resultType="com.zhao.dto.CommentDTO">
@@ -31,53 +47,63 @@
             a.comment_content,
             a.create_time
         from myblog.tb_comment a
-        inner join myblog.tb_user b on b.user_id=a.user_id
-        WHERE
-        <if test="articleId != null">
-            a.article_id = #{articleId}
-        </if>
-        <if test="articleId == null">
-            a.article_id is NULL
-        </if>
-        and  a.is_delete=0
-        and  parent_id IS NULL
+        inner join myblog.tb_user b on b.user_id = a.user_id
+        <where>
+            <if test="articleId != null">
+                a.article_id = #{articleId}
+            </if>
+            <if test="articleId == null">
+                and a.article_id is NULL
+            </if>
+            and  a.is_delete = 0
+            and a.is_review = 1
+            and  parent_id IS NULL
+        </where>
         ORDER BY a.create_time desc
         limit #{current},10
     </select>
 
     <select id="listReplies" resultType="com.zhao.dto.ReplyDTO">
+        select
+        *
+        from
+        (
             SELECT
-                c.user_id,
-                u.nickname,
-                u.avatar,
-                u.web_site,
-                c.reply_id,
-                r.nickname AS reply_nickname,
-                r.web_site AS reply_website,
-                c.id,
-                c.parent_id,
-                c.comment_content,
-                c.create_time
-                FROM myblog.tb_comment c
-                JOIN myblog.tb_user u ON c.user_id = u.user_id
-                JOIN myblog.tb_user r ON c.reply_id = r.user_id
-                WHERE
-                c.is_delete = 0
-                AND
-                parent_id IN
-                (<foreach collection="commentIdList" item="commentId" separator=",">
+            c.user_id,
+            u.nickname,
+            u.avatar,
+            u.web_site,
+            c.reply_id,
+            r.nickname AS reply_nickname,
+            r.web_site AS reply_website,
+            c.id,
+            c.parent_id,
+            c.comment_content,
+            c.create_time,
+            row_number () over ( PARTITION BY c.parent_id ORDER BY c.create_time) row_num
+            FROM myblog.tb_comment c
+            JOIN myblog.tb_user u ON c.user_id = u.user_id
+            JOIN myblog.tb_user r ON c.reply_id = r.user_id
+            WHERE
+            c.is_delete = 0
+            AND c.is_review = 1
+            AND c.parent_id IN
+            (
+            <foreach collection="commentIdList" item="commentId" separator=",">
                 #{commentId}
-                </foreach>)
-                order by create_time asc
+            </foreach>
+            )
+        ) t
+        where row_num &lt; 4
     </select>
 
     <select id="listReplyCountByCommentId" resultType="com.zhao.dto.ReplyCountDTO">
         SELECT
-        parent_id AS comment_id,
+        c.parent_id AS comment_id,
         count(1) AS reply_count
-        FROM myblog.tb_comment
-        WHERE is_delete = 0
-        AND parent_id IN
+        FROM myblog.tb_comment c
+        WHERE c.is_delete = 0 and c.is_review = 1
+        AND c.parent_id IN
         (<foreach collection="commentIdList" item="commentId" separator=",">
             #{commentId}
         </foreach>)
@@ -101,12 +127,21 @@
         JOIN myblog.tb_user u ON c.user_id = u.user_id
         JOIN myblog.tb_user r ON c.reply_id = r.user_id
         WHERE
-        c.is_delete = 0
+        c.is_delete = 0 and c.is_review = 1
         AND
-        parent_id = #{commentId}
+        c.parent_id = #{commentId}
         order by create_time asc
         limit #{current},5
     </select>
 
-
+    <update id="updateCommentReview">
+        update myblog.tb_comment m
+        set m.is_review = #{isReview}
+        where m.id in
+        (
+        <foreach collection="ids" separator="," item="id">
+            #{id}
+        </foreach>
+        )
+    </update>
 </mapper>

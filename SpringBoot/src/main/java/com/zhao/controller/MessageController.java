@@ -1,53 +1,69 @@
 package com.zhao.controller;
 
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.zhao.annotations.AccessLimit;
+import com.zhao.annotations.OptLog;
 import com.zhao.api.MessageService;
-import com.zhao.exception.div.ServiceException;
-import com.zhao.pojo.Message;
-import com.zhao.result.Result;
-import com.zhao.result.ResultInfo;
+import com.zhao.dto.MessageDTO;
+import com.zhao.dto.PageDTO;
+import com.zhao.result.ResultStandby;
+import com.zhao.vo.ConditionVO;
 import com.zhao.vo.MessageVO;
+import com.zhao.vo.ReviewVO;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
+import javax.validation.Valid;
 import java.util.List;
-import java.util.Map;
 
+import static com.zhao.constant.OptTypeConst.REMOVE;
+import static com.zhao.constant.OptTypeConst.UPDATE;
+import static com.zhao.enums.StatusCodeEnum.SUCCESS;
+import static com.zhao.result.ResultStandby.success;
+
+/**
+ * 消息控制器
+ *
+ * @author ran-feiran
+ * @date 2022/09/27
+ */
 @RestController
 @RequestMapping("/message")
+@Api(tags = "留言模块")
 public class MessageController {
 
     @Autowired
-    MessageService messageService;
+    private MessageService messageService;
 
+    @ApiOperation(value = "获取留言列表(后台)")
     @GetMapping("/getMessageList")
-    public Result listMessages(@RequestParam(value = "current",required = false,defaultValue = "1") Integer current,
-                               @RequestParam(value = "size",required = false,defaultValue = "9999") Integer size,
-                               @RequestParam(value = "nickname",required = false) String nickname) {
-        IPage<Message> page = messageService.getMessageList(current, size, nickname);
-        long count = page.getTotal();
-        List<Message> data = page.getRecords();
-        Map<String, Object> map = new HashMap<>();
-        map.put("messageList", data);
-        map.put("count", count);
-        return Result.success(map, "获取留言成功");
+    public ResultStandby<PageDTO<MessageDTO>> listMessages(ConditionVO conditionVO) {
+        return success(messageService.getMessageList(conditionVO), SUCCESS.getDesc());
     }
 
+    @ApiOperation(value = "留言审核")
+    @OptLog(optType = UPDATE)
+    @PutMapping("/review")
+    public ResultStandby<?> updateMessageReview(@Valid @RequestBody ReviewVO reviewVO) {
+        messageService.updateMessageReview(reviewVO);
+        return success(null, SUCCESS.getDesc());
+    }
+
+    @ApiOperation(value = "新增留言")
+    @AccessLimit(seconds = 60 * 15, maxCount = 1, desc = "请求过于频繁，请稍候再试") // 15分钟内留言一次
     @PostMapping("/messages")
-    public Result saveMessages(@RequestBody MessageVO messageVO) {
+    public ResultStandby<?> saveMessages(@RequestBody MessageVO messageVO) {
        messageService.saveMessage(messageVO);
-       return Result.success(null, "留言成功");
+       return success(null, SUCCESS.getDesc());
     }
 
-    @PostMapping("/deleteMessages")
-    public Result deleteMessages(@RequestBody List<Integer> ids) {
-        try {
-            messageService.removeByIds(ids);
-        } catch (Exception e) {
-            throw new ServiceException(ResultInfo.CODE_600,"删除失败");
-        }
-        return Result.success(null,"删除成功");
+    @ApiOperation(value = "留言删除")
+    @OptLog(optType = REMOVE)
+    @DeleteMapping("/del/batch")
+    public ResultStandby<?> deleteMessages(@RequestBody List<Integer> ids) {
+        messageService.removeByIds(ids);
+        return success(null,SUCCESS.getDesc());
     }
 }

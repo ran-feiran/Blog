@@ -1,24 +1,22 @@
-import Vue from 'vue'
-import VueRouter from 'vue-router'
-import "nprogress/nprogress.css";
+import Vue from "vue";
+import VueRouter from "vue-router";
 
-Vue.use(VueRouter)
+Vue.use(VueRouter);
 
 const routes = [
   {
-    path: '/login',
-    name: '登 录',
+    path: "/login",
+    name: "博客空间",
     hidden: true,
-    component: () => import('../views/Login')
+    component: () => import("../views/login/Login.vue")
   }
-]
+];
 
 const createRouter = () =>
-    new VueRouter({
-      mode: "history",
-      base: process.env.BASE_URL,
-      routes
-    });
+  new VueRouter({
+    mode: "history",
+    routes: routes
+  });
 
 const router = createRouter();
 
@@ -28,5 +26,3 @@ export function resetRouter() {
 }
 
 export default router;
-
-

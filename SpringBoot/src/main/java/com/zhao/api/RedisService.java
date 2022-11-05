@@ -10,6 +10,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * redis服务
+ *
+ * @author ran-feiran
+ * @date 2022/09/27
+ */
 @SuppressWarnings("all")
 public interface RedisService {
     /**

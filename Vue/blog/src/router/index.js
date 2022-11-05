@@ -11,6 +11,7 @@ import Message from "../views/message/Messsage.vue";
 import ArticleList from "../components/ArticleList.vue";
 import User from "../views/user/User.vue";
 import OauthLogin from "../components/OauthLogin.vue";
+import Error from "@/views/error/404";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
 
@@ -61,18 +62,13 @@ const routes = [
     path: "/user",
     component: User
   },
-
-
-
-
-
   {
     path: "/oauth/login/qq",
     component: OauthLogin
   },
   {
-    path: "/oauth/login/weibo",
-    component: OauthLogin
+    path:"*",
+    component: Error
   }
 ];
 
@@ -92,12 +88,7 @@ NProgress.configure({
 
 router.beforeEach((to, from, next) => {
   NProgress.start();
-  if (to.path === '/') {
-      next()
-  }
-  else{
-    next()
-  }
+  next();
 })
 
 router.afterEach(() => {

@@ -3,4 +3,20 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.zhao.mapper.FriendLinkMapper">
 
+    <select id="getFriendLinkList" resultType="com.zhao.dto.FriendLinkBackDTO">
+        select
+            tfl.id,
+            tfl.link_address,
+            tfl.link_avatar,
+            tfl.link_name,
+            tfl.create_time,
+            tfl.link_intro
+        from myblog.tb_friend_link tfl
+        <where>
+            <if test="condition.keywords != null and condition.keywords != ''">
+                tfl.link_name like concat('%',#{condition.keywords},'%')
+            </if>
+        </where>
+        limit #{condition.current},#{condition.size}
+    </select>
 </mapper>

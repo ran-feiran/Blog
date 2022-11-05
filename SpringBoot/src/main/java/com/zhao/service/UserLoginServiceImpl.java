@@ -1,25 +1,26 @@
 package com.zhao.service;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zhao.api.UserLoginService;
+import com.zhao.dto.PageDTO;
+import com.zhao.dto.UserLoginDTO;
 import com.zhao.mapper.UserLoginMapper;
 import com.zhao.pojo.UserLogin;
+import com.zhao.vo.ConditionVO;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
 
 @Service
 public class UserLoginServiceImpl extends ServiceImpl<UserLoginMapper, UserLogin> implements UserLoginService {
 
     @Override
-    public IPage<UserLogin> getUserInfoList(Integer pageNum, Integer pageSize, String nickname) {
-        Page<UserLogin> page = new Page<>(pageNum, pageSize);
-        QueryWrapper<UserLogin> wrapper=null;
-        if(nickname != null && !nickname.equals("")){
-            wrapper=new QueryWrapper<>();
-            wrapper.like("nickname", nickname);
+    public PageDTO<UserLoginDTO> getUserInfoList(ConditionVO conditionVO) {
+        Long count = this.baseMapper.selectCount(null);
+        if (count == null || count == 0) {
+            return new PageDTO<>(new ArrayList<>(), 0);
         }
-        return page(page, wrapper);
+        conditionVO.setCurrent((conditionVO.getCurrent() - 1) * conditionVO.getSize());
+        return new PageDTO<>(this.baseMapper.getUserInfoList(conditionVO), count);
     }
 }

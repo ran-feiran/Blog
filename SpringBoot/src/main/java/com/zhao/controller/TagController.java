@@ -1,125 +1,86 @@
 package com.zhao.controller;
 
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.mysql.jdbc.StringUtils;
-import com.zhao.api.ArticleService;
-import com.zhao.dto.ArticleBlogDTO;
-import com.zhao.result.Result;
-import com.zhao.result.ResultInfo;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.zhao.annotations.OptLog;
 import com.zhao.api.TagService;
-import com.zhao.exception.div.ServiceException;
+import com.zhao.dto.ArticleBlogDTO;
+import com.zhao.dto.PageDTO;
+import com.zhao.dto.PageListDTO;
+import com.zhao.dto.TagBackDTO;
 import com.zhao.pojo.Tag;
+import com.zhao.result.ResultStandby;
+import com.zhao.vo.ConditionVO;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+import static com.zhao.constant.OptTypeConst.REMOVE;
+import static com.zhao.constant.OptTypeConst.SAVE_OR_UPDATE;
+import static com.zhao.enums.StatusCodeEnum.SUCCESS;
+import static com.zhao.result.ResultStandby.success;
+
+/**
+ * 标签控制器
+ *
+ * @author ran-feiran
+ * @date 2022/09/27
+ */
 @RestController
 @RequestMapping("/tag")
+@Api(tags = "标签模块")
 public class TagController {
 
     @Autowired
     private TagService tagService;
 
-    @Autowired
-    private ArticleService articleService;
+    @ApiOperation(value = "标签搜索")
+    @GetMapping("/search")
+    public ResultStandby<List<Tag>> searchTags(@RequestParam("keywords") String keywords) {
+        return success(tagService.searchTags(keywords), SUCCESS.getDesc());
+    }
 
-
+    @ApiOperation(value = "获取标签列表")
     @GetMapping("/tags")
-    public Result listTags() {
-        List<Tag> tagList = tagService.list();
-        long count = tagService.count();
-        Map<String, Object> map = new HashMap<>();
-        map.put("tagList",tagList);
-        map.put("count",count);
-        return Result.success(map,"");
+    public ResultStandby<PageDTO<Tag>> listTags() {
+        return success(new PageDTO<>(tagService.list(), tagService.count()),SUCCESS.getDesc());
     }
 
+    @ApiOperation(value = "获取分类数据(后台)")
     @GetMapping("/getTagList")
-    public Result getTagList(){
-        List<Tag> tagList = tagService.list();
-        if (tagList != null) {
-            Map<String, Object> map = new HashMap<>();
-            map.put("tagList",tagList);
-            return Result.success(map,"获取标签成功");
-        }
-        throw new ServiceException(ResultInfo.CODE_600,"获取标签失败");
+    public ResultStandby<List<Tag>> getTagList(){
+        return success(tagService.list(),SUCCESS.getDesc());
     }
 
-
-    @DeleteMapping("/deleteTag")
-    public Result deleteCategory(@RequestParam("tagId") Integer tagId) {
-        try {
-            tagService.removeById(tagId);
-        } catch (Exception e) {
-            throw new ServiceException(ResultInfo.CODE_600,"删除标签失败");
-        }
-        return Result.success();
+    @ApiOperation(value = "物理删除标签")
+    @OptLog(optType = REMOVE)
+    @DeleteMapping("/del/batch")
+    public ResultStandby<?> delBatch(@RequestBody List<Integer> ids) {
+        tagService.removeBatchByIds(ids);
+        return success(null, SUCCESS.getDesc());
     }
 
-
-    @PostMapping("/del/batch")
-    public Result delBatch(@RequestBody List<Integer> ids) {
-        if (ids.size() <= 0) {
-            throw new ServiceException(ResultInfo.CODE_600,"批量删除标签失败");
-        }
-        try {
-            tagService.removeBatchByIds(ids);
-        } catch (Exception e) {
-            throw new ServiceException(ResultInfo.CODE_600,"批量删除标签失败");
-        }
-        return Result.success();
-    }
-
-
+    @ApiOperation(value = "新增或更新标签")
+    @OptLog(optType = SAVE_OR_UPDATE)
     @PostMapping("/addOrEditTag")
-    public Result addOrEditCategory(@RequestBody Tag tag) {
-        try {
-            tagService.saveOrUpdate(tag);
-        } catch (Exception e) {
-            throw new ServiceException(ResultInfo.CODE_600,"操作标签失败");
-        }
-        return Result.success();
+    public ResultStandby<?> addOrEditCategory(@RequestBody Tag tag) {
+        tagService.saveOrUpdate(tag);
+        return success(null, SUCCESS.getDesc());
     }
 
-
+    @ApiOperation(value = "获取标签列表(后台)")
     @GetMapping("/listTags")
-    public Result listCategory(
-            @RequestParam(value = "pageNum",defaultValue = "1") Integer pageNum,
-            @RequestParam(value = "pageSize",defaultValue = "5") Integer pageSize,
-            @RequestParam(value = "tagName",defaultValue = "") String tagName) {
-        Page<Tag> page = new Page<>(pageNum,pageSize);
-        QueryWrapper<Tag> wrapper = null;
-        if (!StringUtils.isNullOrEmpty(tagName)) {
-            wrapper = new QueryWrapper<>();
-            wrapper.like("tag_name",tagName);
-        }
-        Page<Tag> tagList = null;
-        try {
-            tagList = tagService.page(page, wrapper);
-        } catch (Exception e) {
-            throw new ServiceException(ResultInfo.CODE_600,"获取标签失败");
-        }
-        Map<String, Object> map = new HashMap<>();
-        map.put("tagList",tagList);
-        return Result.success(map,"success");
+    public ResultStandby<PageDTO<TagBackDTO>> listCategory(ConditionVO conditionVO) {
+        return success(tagService.queryPageTags(conditionVO),SUCCESS.getDesc());
     }
 
-    @GetMapping("/{tagId}")
-    public Result getTagById(@PathVariable("tagId") Integer tagId,
-                             @RequestParam("current") Integer current) {
-        QueryWrapper<Tag> wrapper = new QueryWrapper<>();
-        wrapper.select("tag_name").eq("tag_id",tagId);
-        Tag one = tagService.getOne(wrapper);
-        current = current - 1;
-        List<ArticleBlogDTO> articleBlogDTOS = tagService.listArticles(tagId,current);
-        Map<String, Object> map = new HashMap<>();
-        map.put("articleList", articleBlogDTOS);
-        map.put("name", one.getTagName());
-        return Result.success(map,"");
+    @ApiOperation(value = "通过标签id获取对应文章")
+    @GetMapping("/query/{tagId}")
+    public ResultStandby<PageListDTO<ArticleBlogDTO>> getTagById(@PathVariable("tagId") Integer tagId, @RequestParam("current") Integer current) {
+        return success(new PageListDTO<>(tagService.listArticles(tagId, current - 1), tagService
+                .getOne(new LambdaQueryWrapper<Tag>().eq(Tag::getTagId, tagId)).getTagName()),SUCCESS.getDesc());
     }
 }

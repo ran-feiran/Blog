@@ -48,7 +48,7 @@
           确定
         </v-btn>
         <!-- 登录 -->
-        <div class="mt-10 login-tip">
+        <div class="login-tip" style="margin-top: 17px">
           已有账号？<span @click="openLogin" style="color: #4ab1f4">登录</span>
         </div>
       </div>
@@ -63,7 +63,7 @@ export default {
       email: "",
       code: "",
       password: "",
-      flag: false,
+      flag: true,
       codeMsg: "发送",
       time: 60,
       show: false
@@ -165,7 +165,7 @@ export default {
     }
   },
   watch: {
-    username(value) {
+    email(value) {
       let reg = /^[A-Za-z0-9\u4e00-\u9fa5]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/;
       if (reg.test(value)) {
         this.flag = false;

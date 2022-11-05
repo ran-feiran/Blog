@@ -1,28 +1,36 @@
 package com.zhao.controller;
 
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.zhao.api.RedisService;
+import com.zhao.annotations.AccessLimit;
+import com.zhao.annotations.OptLog;
+import com.zhao.api.CommentService;
+import com.zhao.dto.CommentBackDTO;
 import com.zhao.dto.CommentDTO;
 import com.zhao.dto.PageDTO;
 import com.zhao.dto.ReplyDTO;
-import com.zhao.result.Result;
-import com.zhao.result.ResultInfo;
-import com.zhao.api.CommentService;
-import com.zhao.dto.CommentBackDTO;
-import com.zhao.exception.div.ServiceException;
-import com.zhao.pojo.Comment;
+import com.zhao.result.ResultStandby;
 import com.zhao.vo.CommentVO;
+import com.zhao.vo.ConditionVO;
+import com.zhao.vo.ReviewVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Arrays;
-import java.util.HashMap;
+import javax.validation.Valid;
 import java.util.List;
-import java.util.Map;
 
+import static com.zhao.constant.OptTypeConst.SAVE;
+import static com.zhao.constant.OptTypeConst.UPDATE;
+import static com.zhao.enums.StatusCodeEnum.SUCCESS;
+import static com.zhao.result.ResultStandby.success;
+
+/**
+ * 评论控制器
+ *
+ * @author ran-feiran
+ * @date 2022/09/27
+ */
 @RestController
 @Api(tags = "评论模块")
 @RequestMapping("/comment")
@@ -31,71 +39,58 @@ public class CommentController {
     @Autowired
     private CommentService commentService;
 
-
-
-    @PostMapping("/{commentId}/like")
-    public Result saveCommentLike(@PathVariable("commentId") Integer commentId) {
+    @ApiOperation(value = "评论点赞")
+    @OptLog(optType = SAVE)
+    @PostMapping("/like/{commentId}")
+    public ResultStandby<?> saveCommentLike(@PathVariable("commentId") Integer commentId) {
         commentService.saveCommentLike(commentId);
-        return Result.success();
+        return success();
     }
 
-
+    @ApiOperation(value = "更新id对应父评论下的子评论")
     @GetMapping("/comments/replies")
-    public Result reloadReply(@RequestParam("commentId") Integer commentId,
-                              @RequestParam("current") long current) {
-        List<ReplyDTO> replyDTOS = commentService.listRepliesByCommentId(commentId, current);
-        Map<String, Object> map = new HashMap<>();
-        map.put("data",replyDTOS);
-        return Result.success(map, "");
+    public ResultStandby<List<ReplyDTO>> reloadReply(
+                                @RequestParam("commentId") Integer commentId,
+                                @RequestParam("current") Long current) {
+        return success(commentService.listRepliesByCommentId(commentId, current), SUCCESS.getDesc());
     }
 
-
+    @ApiOperation(value = "保存评论")
+    @OptLog(optType = SAVE)
     @PostMapping("/comments")
-    public Result saveComments(@RequestBody CommentVO commentVO) {
+    public ResultStandby<?> saveComments(@RequestBody CommentVO commentVO) {
         commentService.saveComment(commentVO);
-        return Result.success();
+        return success();
     }
 
-
+    @ApiOperation(value = "获取评论列表")
     @GetMapping("/comments")
-    public Result listComments(@RequestParam(value = "current", required = false) Integer current,
-                               @RequestParam(value = "articleId", required = false) Integer articleId) {
-        // 如果有articleId证明是在文章下面评论，如果没有证明是在友链下面评论
-        PageDTO<CommentDTO> pageDTO = commentService.listComments(articleId, current);
-        if (pageDTO == null) {
-            return Result.error(ResultInfo.CODE_600, "还没有人发表谈论~");
-        }
-        Map<String, Object> map = new HashMap<>();
-        map.put("recordList",pageDTO.getRecordList());
-        System.out.println("23333:"+Arrays.toString(pageDTO.getRecordList().toArray()));
-        map.put("count",pageDTO.getCount());
-        return Result.success(map, "");
+    public ResultStandby<PageDTO<CommentDTO>> listComments(
+                                @RequestParam(value = "current", required = false) Integer current,
+                                @RequestParam(value = "articleId", required = false) Integer articleId) {
+        return success(commentService.listComments(articleId, current), SUCCESS.getDesc());
     }
 
-
+    @ApiOperation(value = "获取评论列表(后台)")
+    @AccessLimit(seconds = 60, maxCount = 5, desc = "请求过于频繁，请稍候再试") // 一分钟最大评论五次
     @GetMapping("/getUserCommentList")
-    @ApiOperation(value = "分页获取用户评论列表")
-    public Result getUserCommentList(@RequestParam("pageNum") Integer pageNum,
-                                     @RequestParam("pageSize") Integer pageSize,
-                                     @RequestParam("nickname") String nickname) {
-        pageNum = (pageNum - 1) * pageSize;
-        List<CommentBackDTO> userReplyList = commentService.getUserReplyList(pageNum, pageSize, nickname);
-        long total = commentService.count();
-        Map<String, Object> map = new HashMap<>();
-        map.put("userReplyList",userReplyList);
-        map.put("total",total);
-        return Result.success(map,"用户评论列表加载完成");
+    public ResultStandby<PageDTO<CommentBackDTO>> getUserCommentList(ConditionVO conditionVO) {
+        return success(commentService.getUserReplyList(conditionVO),SUCCESS.getDesc());
     }
 
+    @ApiOperation(value = "逻辑删除评论")
+    @OptLog(optType = UPDATE)
+    @DeleteMapping("/del/batch")
+    public ResultStandby<?> delComments(@RequestBody List<Integer> ids) {
+        commentService.removeByIds(ids);
+        return success();
+    }
 
-    @PostMapping("/delComments")
-    @ApiOperation(value = "删除用户评论")
-    public Result delComments(@RequestBody List<Integer> ids) {  // 这里需要优化
-        try {
-            commentService.removeByIds(ids);
-        } catch (Exception e) {
-            throw new ServiceException(ResultInfo.CODE_600,"删除失败");
-        }
-        return Result.success(null,"删除成功");
+    @ApiOperation(value = "评论审核")
+    @OptLog(optType = UPDATE)
+    @PutMapping("/review")
+    public ResultStandby<?> updateCommentReview(@Valid @RequestBody ReviewVO reviewVO) {
+        commentService.updateCommentReview(reviewVO);
+        return success();
     }
 }

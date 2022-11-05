@@ -17,15 +17,13 @@ public class ArticleAddVO implements Serializable {
 
     private String articleTitle;
 
-    private String articleContent; // 对应mysql中的longtext
+    private String articleContent;
 
     private String articleCover;
 
     private Integer categoryId;
 
     private boolean isTop;
-
-    private boolean isDraft;
 
     private List<Integer> tagIdList;
 }

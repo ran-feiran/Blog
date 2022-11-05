@@ -16,6 +16,7 @@ import java.io.Serializable;
 @AllArgsConstructor
 @NoArgsConstructor
 @ApiModel(value = "about对象")
+@Deprecated
 public class About implements Serializable {
 
     private static final long serialVersionUID = 1L;

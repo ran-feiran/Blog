@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- banner -->
-    <div class="tag-banner banner">
+    <div class="banner" :style="cover">
       <h1 class="banner-title">标签</h1>
     </div>
     <!-- 标签列表 -->
@@ -35,19 +35,26 @@ export default {
   methods: {
     listTags() {
       this.axios.get("/api/tag/tags").then(({ data }) => {
-        this.tagList = data.data.tagList;
+        this.tagList = data.data.recordList;
         this.count = data.data.count;
       });
+    }
+  },
+  computed:{
+    cover() {
+      var cover = "";
+      this.$store.state.blogInfo.pageList.forEach(item => {
+        if (item.pageLabel == "tag") {
+          cover = item.pageCover;
+        }
+      });
+      return "background: url(" + cover + ") center center / cover no-repeat";
     }
   }
 };
 </script>
 
 <style scoped>
-.tag-banner {
-  background: url("../../assets/img/4.jpg") center center /
-    cover no-repeat;
-}
 .tag-cloud-title {
   line-height: 2;
   font-size: 36px;
